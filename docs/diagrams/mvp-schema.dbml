@@ -1,0 +1,96 @@
+Table organizations {
+  id uuid [pk]
+  name varchar
+  country varchar
+  created_at timestamp
+}
+
+Table users {
+  id uuid [pk]
+  organization_id uuid [ref: > organizations.id]
+  email varchar [unique]
+  password_hash varchar
+  status varchar
+}
+
+Table roles {
+  id uuid [pk]
+  name varchar [unique]
+}
+
+Table user_roles {
+  user_id uuid [ref: > users.id]
+  role_id uuid [ref: > roles.id]
+
+  indexes {
+    (user_id, role_id) [pk]
+  }
+}
+
+Table product_categories {
+  id uuid [pk]
+  parent_category_id uuid [ref: > product_categories.id]
+  code varchar [unique]
+  name varchar
+  is_active boolean
+}
+
+Table passport_templates {
+  id uuid [pk]
+  organization_id uuid [ref: > organizations.id]
+  category_id uuid [ref: > product_categories.id]
+  name varchar
+  version integer
+  status varchar
+  created_at timestamp
+}
+
+Table template_fields {
+  id uuid [pk]
+  template_id uuid [ref: > passport_templates.id]
+  code varchar
+  label varchar
+  data_type varchar
+  is_required boolean
+  display_order integer
+  validation_rules jsonb
+}
+
+Table product_models {
+  id uuid [pk]
+  organization_id uuid [ref: > organizations.id]
+  category_id uuid [ref: > product_categories.id]
+  template_id uuid [ref: > passport_templates.id]
+  model_code varchar
+  name varchar
+  status varchar
+}
+
+Table product_items {
+  id uuid [pk]
+  model_id uuid [ref: > product_models.id]
+  serial_number varchar
+  public_id uuid [unique]
+  manufacture_date date
+  status varchar
+  passport_data jsonb
+  created_at timestamp
+}
+
+Table lifecycle_events {
+  id uuid [pk]
+  item_id uuid [ref: > product_items.id]
+  event_type varchar
+  occurred_at timestamp
+  description text
+  event_data jsonb
+}
+
+Table data_carriers {
+  id uuid [pk]
+  item_id uuid [ref: > product_items.id]
+  carrier_type varchar
+  public_token uuid [unique]
+  status varchar
+  issued_at timestamp
+}

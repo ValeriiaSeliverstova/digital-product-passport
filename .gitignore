@@ -70,3 +70,6 @@ backend/coverage/
 
 # Generated files
 frontend/.vite/
+
+
+AGENTS.md
