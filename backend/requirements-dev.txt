@@ -1,5 +1,5 @@
 -r requirements.txt
 
 # Tools used only while developing and testing the API.
-pytest
-httpx2
+pytest==9.1.1
+httpx2==2.7.0

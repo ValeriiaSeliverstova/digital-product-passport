@@ -86,11 +86,13 @@ Represents a manufacturer or another company registered in the system.
 
 ### User
 
-Represents an authenticated system user associated with an organization.
+Represents an authenticated system user with exactly one role.
+
+Manufacturer users must belong to an organization. A platform-level system administrator may have no organization.
 
 ### Role
 
-Defines the user's permissions, such as system administrator or manufacturer user.
+Defines the user's permissions. The initial roles are `system_admin` and `manufacturer_user`.
 
 ### ProductCategory
 
@@ -156,7 +158,10 @@ Represents a QR code, NFC tag, or another carrier connected to a product item.
 ## Initial Relationships
 
 - An organization can have multiple users.
-- A user can have one or more roles.
+- Each user has exactly one role.
+- A role can be assigned to multiple users.
+- A manufacturer user belongs to one organization.
+- A system administrator may have no organization.
 - A product category can contain child categories.
 - A product category can have multiple passport templates.
 - A passport template belongs to one organization.

@@ -1,0 +1,9 @@
+This directory contains Alembic database migration scripts.
+
+Create a migration after changing SQLAlchemy models:
+
+    alembic revision --autogenerate -m "describe the change"
+
+Apply all pending migrations:
+
+    alembic upgrade head
