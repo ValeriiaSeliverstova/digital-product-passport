@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.models import Role, User
-from app.security import hash_password
+from app.security import create_access_token, hash_password
 
 
 TEST_EMAIL = "admin@example.com"
@@ -112,3 +112,19 @@ def test_current_user_requires_valid_token(client: TestClient) -> None:
 
     assert missing_response.status_code == 401
     assert invalid_response.status_code == 401
+
+
+def test_current_user_rejects_inactive_account(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    user = create_test_user(db_session, status="inactive")
+    token = create_access_token(user.id)
+
+    response = client.get(
+        "/api/users/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Could not validate credentials"}

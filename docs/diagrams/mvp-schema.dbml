@@ -45,6 +45,7 @@ Table template_fields {
   data_type varchar
   is_required boolean
   display_order integer
+  access_level varchar
   validation_rules jsonb
 }
 
