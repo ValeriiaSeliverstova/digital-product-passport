@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,6 +24,8 @@ class Settings(BaseSettings):
     jwt_issuer: str = "digital-product-passport-api"
     jwt_audience: str = "digital-product-passport-api"
 
+    frontend_origin: str = "http://localhost:5173"
+
     @field_validator("jwt_secret_key")
     @classmethod
     def validate_jwt_secret_key(cls, value: SecretStr) -> SecretStr:
@@ -30,6 +33,27 @@ class Settings(BaseSettings):
 
         if len(value.get_secret_value()) < 32:
             raise ValueError("JWT_SECRET_KEY must contain at least 32 characters")
+        return value
+
+    @field_validator("frontend_origin")
+    @classmethod
+    def validate_frontend_origin(cls, value: str) -> str:
+        """Require one explicit HTTP(S) origin without a path or credentials."""
+
+        value = value.strip().rstrip("/")
+        parsed = urlsplit(value)
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.path
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError(
+                "FRONTEND_ORIGIN must be an HTTP(S) origin without a path",
+            )
         return value
 
     model_config = SettingsConfigDict(
