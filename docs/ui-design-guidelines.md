@@ -464,20 +464,26 @@ The frontend SHOULD use this small structure as features are added:
 
 ```text
 frontend/src/
-├── components/  # Reusable UI and interaction components
-├── pages/       # Complete application screens
+├── components/  # Component.jsx and Component.module.css pairs
+├── pages/       # Page.jsx and Page.module.css pairs
 ├── services/    # API and authentication requests; no UI markup
 ├── styles/
 │   ├── tokens.css
 │   └── global.css
 ├── App.jsx      # Top-level authentication and page flow
+├── App.module.css
 └── main.jsx     # React entry point and global style import
 ```
 
 - `tokens.css` MUST contain the shared colour, type, spacing, radius, and shadow
   values.
 - `global.css` MUST contain body defaults, focus treatment, basic form defaults,
-  and shared page layout.
+  and accessibility utilities. It MUST NOT contain page-specific layout.
+- Page and component styles MUST use CSS Modules named after their owner, such
+  as `LoginPage.module.css` or `Button.module.css`.
+- CSS Modules MUST be imported as `styles` and applied through properties such
+  as `className={styles.form}`. Global class-name strings are reserved for the
+  small documented utilities in `global.css`.
 - Reusable components MUST live in `components/`; one-off page composition stays
   in `pages/`.
 - API base URL, authorization header, response parsing, and safe error conversion
@@ -532,4 +538,3 @@ A screen or component is complete only when all applicable statements are true:
 - [ ] User input remains available after a recoverable error.
 - [ ] The design and implementation use the same content and behaviour.
 - [ ] Frontend lint and production build checks pass.
-

@@ -1,0 +1,141 @@
+.page {
+  display: grid;
+  min-height: 100vh;
+  grid-template-rows: auto 1fr auto;
+}
+
+.brand {
+  display: flex;
+  min-height: 4.5rem;
+  padding: var(--space-4);
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.brandMark {
+  display: inline-flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border-radius: 50%;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+.brandName {
+  font-weight: var(--font-weight-semibold);
+}
+
+.main {
+  display: grid;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-4);
+  align-items: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 26rem;
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-dialog);
+  box-shadow: var(--shadow-floating);
+}
+
+.introduction {
+  margin-block-end: var(--space-6);
+  color: var(--color-text-muted);
+}
+
+.form,
+.field {
+  display: grid;
+}
+
+.form {
+  gap: var(--space-4);
+}
+
+.field {
+  gap: var(--space-1);
+}
+
+.passwordControl {
+  position: relative;
+}
+
+.passwordControl input {
+  padding-inline-end: 4.5rem;
+}
+
+.showPasswordButton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 4rem;
+  min-height: 2.75rem;
+  padding-inline: var(--space-3);
+  color: var(--color-primary);
+  background: transparent;
+  border: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.error {
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-small);
+}
+
+.submitButton {
+  display: inline-flex;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  align-items: center;
+  justify-content: center;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.submitButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.footer {
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  text-align: center;
+}
+
+@media (min-width: 600px) {
+  .brand {
+    padding-inline: var(--space-6);
+  }
+
+  .main {
+    padding: var(--space-12) var(--space-6);
+  }
+
+  .card {
+    padding: var(--space-8);
+  }
+}
