@@ -1,9 +1,9 @@
 import { useState } from 'react'
 
 import LoginPage from './pages/LoginPage.jsx'
+import TemplateListPage from './pages/TemplateListPage.jsx'
 import { getCurrentUser, login } from './services/auth.js'
 import { ApiError } from './services/api.js'
-import styles from './App.module.css'
 
 function App() {
   const [accessToken, setAccessToken] = useState(null)
@@ -36,34 +36,11 @@ function App() {
   }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
-        <span className={styles.brand}>Digital Product Passport</span>
-        <button
-          className={styles.logoutButton}
-          type="button"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
-      </header>
-
-      <main>
-        <section className={styles.content} aria-labelledby="page-title">
-          <h1 id="page-title">Welcome</h1>
-          <dl className={styles.userDetails}>
-            <div>
-              <dt>Email</dt>
-              <dd>{currentUser.email}</dd>
-            </div>
-            <div>
-              <dt>Role</dt>
-              <dd>{currentUser.role.name}</dd>
-            </div>
-          </dl>
-        </section>
-      </main>
-    </div>
+    <TemplateListPage
+      accessToken={accessToken}
+      currentUser={currentUser}
+      onLogout={handleLogout}
+    />
   )
 }
 

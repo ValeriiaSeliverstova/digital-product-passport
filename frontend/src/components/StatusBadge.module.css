@@ -1,0 +1,25 @@
+.badge {
+  display: inline-flex;
+  min-height: 1.75rem;
+  padding: var(--space-1) var(--space-3);
+  align-items: center;
+  border-radius: 999px;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+}
+
+.draft {
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+}
+
+.active {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.archived {
+  color: var(--color-archived);
+  background: var(--color-archived-bg);
+}

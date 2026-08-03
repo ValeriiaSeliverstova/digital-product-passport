@@ -1,0 +1,113 @@
+.page {
+  min-height: 100vh;
+}
+
+.main {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4) var(--space-12);
+}
+
+.pageHeading {
+  margin-block-end: var(--space-6);
+}
+
+.pageHeading h1 {
+  margin-block-end: var(--space-1);
+}
+
+.count {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.templateGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.templateCard,
+.stateCard {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.cardHeading {
+  display: flex;
+  margin-block-end: var(--space-4);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cardHeading h2 {
+  margin: 0;
+}
+
+.metadata {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding-block-start: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.metadata div {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  gap: var(--space-3);
+}
+
+.metadata dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+.metadata dd {
+  margin: 0;
+}
+
+.stateCard {
+  max-width: var(--form-max-width);
+}
+
+.primaryButton {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.primaryButton:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+@media (min-width: 600px) {
+  .main {
+    padding: var(--space-8) var(--space-6) var(--space-12);
+  }
+
+  .templateCard,
+  .stateCard {
+    padding: var(--space-6);
+  }
+}
+
+@media (min-width: 900px) {
+  .main {
+    padding-inline: var(--space-8);
+  }
+
+  .templateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+}
