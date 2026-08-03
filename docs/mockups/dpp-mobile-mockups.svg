@@ -1,0 +1,256 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2222" height="964" viewBox="0 0 2222 964">
+  <title>Digital Product Passport mobile mockups</title>
+  <desc>Five mobile-first screens: login, template list, create template, template details, and bulk field creation.</desc>
+
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#17232A" flood-opacity="0.12" />
+    </filter>
+    <style>
+      .frame { fill: #F5F7F8; stroke: #CBD5DB; stroke-width: 1; }
+      .surface { fill: #FFFFFF; stroke: #CBD5DB; stroke-width: 1; }
+      .control { fill: #FFFFFF; stroke: #64748B; stroke-width: 1.5; }
+      .primary { fill: #0F4C5C; }
+      .primary-text { fill: #FFFFFF; font: 600 16px system-ui, sans-serif; }
+      .title { fill: #17232A; font: 700 26px system-ui, sans-serif; }
+      .section { fill: #17232A; font: 650 20px system-ui, sans-serif; }
+      .card-title { fill: #17232A; font: 650 16px system-ui, sans-serif; }
+      .body { fill: #17232A; font: 400 14px system-ui, sans-serif; }
+      .label { fill: #17232A; font: 600 13px system-ui, sans-serif; }
+      .muted { fill: #52616B; font: 400 12px system-ui, sans-serif; }
+      .link { fill: #0F4C5C; font: 600 13px system-ui, sans-serif; }
+      .mono { fill: #52616B; font: 400 12px ui-monospace, monospace; }
+      .badge-text { font: 600 11px system-ui, sans-serif; }
+      .nav { fill: #52616B; font: 500 11px system-ui, sans-serif; }
+      .nav-active { fill: #0F4C5C; font: 650 11px system-ui, sans-serif; }
+      .danger { fill: #B42318; font: 600 12px system-ui, sans-serif; }
+      .divider { stroke: #CBD5DB; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect width="2222" height="964" fill="#E2E8F0" />
+
+  <!-- 01 Login -->
+  <g id="01-login" transform="translate(40 60)">
+    <text x="0" y="-18" class="section">01 · Login</text>
+    <rect width="390" height="844" rx="22" class="frame" filter="url(#shadow)" />
+    <rect width="390" height="72" rx="22" fill="#FFFFFF" />
+    <rect y="50" width="390" height="22" fill="#FFFFFF" />
+    <line x1="0" y1="72" x2="390" y2="72" class="divider" />
+    <circle cx="34" cy="36" r="18" fill="#0F4C5C" />
+    <text x="34" y="41" text-anchor="middle" class="primary-text" font-size="11">DPP</text>
+    <text x="62" y="41" class="card-title">Digital Product Passport</text>
+
+    <rect x="20" y="166" width="350" height="450" rx="12" class="surface" filter="url(#shadow)" />
+    <text x="40" y="210" class="title">Manufacturer sign in</text>
+    <text x="40" y="237" class="muted">Secure access for registered manufacturers</text>
+
+    <text x="40" y="282" class="label">Email</text>
+    <rect x="40" y="294" width="310" height="48" rx="8" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" />
+    <text x="54" y="324" class="body">manufacturer@example.com</text>
+
+    <text x="40" y="380" class="label">Password</text>
+    <rect x="40" y="392" width="310" height="48" rx="8" class="control" />
+    <text x="54" y="422" class="body">••••••••••••</text>
+    <text x="306" y="422" class="link">Show</text>
+
+    <rect x="40" y="474" width="310" height="48" rx="8" class="primary" />
+    <text x="195" y="504" text-anchor="middle" class="primary-text">Sign in</text>
+    <text x="195" y="570" text-anchor="middle" class="muted">Product safety · Traceability · Trust</text>
+  </g>
+
+  <!-- 02 Template list -->
+  <g id="02-template-list" transform="translate(478 60)">
+    <text x="0" y="-18" class="section">02 · Template list</text>
+    <rect width="390" height="844" rx="22" class="frame" filter="url(#shadow)" />
+    <rect width="390" height="68" rx="22" fill="#FFFFFF" />
+    <rect y="48" width="390" height="20" fill="#FFFFFF" />
+    <line x1="0" y1="68" x2="390" y2="68" class="divider" />
+    <text x="20" y="41" class="link">☰ Menu</text>
+    <text x="195" y="41" text-anchor="middle" class="card-title">Templates</text>
+    <text x="370" y="41" text-anchor="end" class="muted">KhersonSafe Ltd.</text>
+
+    <text x="20" y="112" class="title">Templates</text>
+    <text x="20" y="135" class="muted">2 templates</text>
+    <rect x="214" y="86" width="156" height="44" rx="8" class="primary" />
+    <text x="292" y="113" text-anchor="middle" class="primary-text">Create template</text>
+
+    <rect x="20" y="154" width="350" height="44" rx="8" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" />
+    <text x="38" y="181" class="muted">Search templates</text>
+    <rect x="20" y="210" width="350" height="44" rx="8" class="control" />
+    <text x="38" y="237" class="body">All statuses</text>
+    <text x="350" y="237" text-anchor="end" class="body">⌄</text>
+
+    <rect x="20" y="274" width="350" height="188" rx="10" class="surface" />
+    <text x="38" y="308" class="card-title">EverydaySafe Product Passport</text>
+    <rect x="288" y="322" width="64" height="26" rx="13" fill="#FEF3C7" />
+    <text x="320" y="339" text-anchor="middle" fill="#92400E" class="badge-text">Draft</text>
+    <text x="38" y="342" class="muted">Safes · Version 1</text>
+    <line x1="38" y1="364" x2="352" y2="364" class="divider" />
+    <text x="38" y="390" class="muted">3 fields</text>
+    <text x="352" y="390" text-anchor="end" class="muted">Updated 2 Aug 2026</text>
+    <rect x="38" y="406" width="314" height="40" rx="8" fill="#FFFFFF" stroke="#0F4C5C" stroke-width="1.5" />
+    <text x="195" y="431" text-anchor="middle" class="link">View template</text>
+
+    <rect x="20" y="478" width="350" height="188" rx="10" class="surface" />
+    <text x="38" y="512" class="card-title">KhersonSafe Standard Passport</text>
+    <rect x="288" y="526" width="64" height="26" rx="13" fill="#DCFCE7" />
+    <text x="320" y="543" text-anchor="middle" fill="#166534" class="badge-text">Active</text>
+    <text x="38" y="546" class="muted">Safes · Version 1</text>
+    <line x1="38" y1="568" x2="352" y2="568" class="divider" />
+    <text x="38" y="594" class="muted">8 fields</text>
+    <text x="352" y="594" text-anchor="end" class="muted">Updated 2 Aug 2026</text>
+    <rect x="38" y="610" width="314" height="40" rx="8" fill="#FFFFFF" stroke="#0F4C5C" stroke-width="1.5" />
+    <text x="195" y="635" text-anchor="middle" class="link">View template</text>
+
+    <rect y="772" width="390" height="72" fill="#FFFFFF" />
+    <line x1="0" y1="772" x2="390" y2="772" class="divider" />
+    <text x="65" y="814" text-anchor="middle" class="nav">Dashboard</text>
+    <text x="195" y="814" text-anchor="middle" class="nav-active">Templates</text>
+    <text x="325" y="814" text-anchor="middle" class="nav">Products</text>
+  </g>
+
+  <!-- 03 Create template -->
+  <g id="03-create-template" transform="translate(916 60)">
+    <text x="0" y="-18" class="section">03 · Create template</text>
+    <rect width="390" height="844" rx="22" class="frame" filter="url(#shadow)" />
+    <rect width="390" height="68" rx="22" fill="#FFFFFF" />
+    <rect y="48" width="390" height="20" fill="#FFFFFF" />
+    <line x1="0" y1="68" x2="390" y2="68" class="divider" />
+    <text x="20" y="41" class="link">← Templates</text>
+    <text x="370" y="41" text-anchor="end" class="muted">KhersonSafe Ltd.</text>
+
+    <text x="20" y="116" class="title">Create template</text>
+    <text x="20" y="141" class="muted">New templates start as editable drafts.</text>
+
+    <rect x="20" y="166" width="350" height="432" rx="10" class="surface" />
+    <text x="40" y="206" class="label">Template name</text>
+    <rect x="40" y="218" width="310" height="48" rx="8" class="control" />
+    <text x="54" y="248" class="body">EverydaySafe Product Passport</text>
+    <text x="40" y="286" class="muted">Use a clear name that identifies the passport.</text>
+
+    <text x="40" y="326" class="label">Product category</text>
+    <rect x="40" y="338" width="310" height="48" rx="8" class="control" />
+    <text x="54" y="368" class="body">Safes</text>
+    <text x="332" y="368" text-anchor="end" class="body">⌄</text>
+
+    <text x="40" y="426" class="label">Version</text>
+    <rect x="40" y="438" width="310" height="48" rx="8" class="control" />
+    <text x="54" y="468" class="body">1</text>
+
+    <rect x="40" y="520" width="310" height="48" rx="8" class="primary" />
+    <text x="195" y="550" text-anchor="middle" class="primary-text">Create draft</text>
+    <text x="195" y="584" text-anchor="middle" class="link">Cancel</text>
+
+    <rect x="20" y="624" width="350" height="78" rx="8" fill="#DBEAFE" />
+    <text x="38" y="652" fill="#1D4ED8" class="label">What happens next?</text>
+    <text x="38" y="678" fill="#1D4ED8" class="muted">Add and validate fields before activation.</text>
+  </g>
+
+  <!-- 04 Template details -->
+  <g id="04-template-details" transform="translate(1354 60)">
+    <text x="0" y="-18" class="section">04 · Template details</text>
+    <rect width="390" height="844" rx="22" class="frame" filter="url(#shadow)" />
+    <rect width="390" height="68" rx="22" fill="#FFFFFF" />
+    <rect y="48" width="390" height="20" fill="#FFFFFF" />
+    <line x1="0" y1="68" x2="390" y2="68" class="divider" />
+    <text x="20" y="41" class="link">← Templates</text>
+    <text x="370" y="41" text-anchor="end" class="muted">KhersonSafe Ltd.</text>
+
+    <text x="20" y="105" class="title">EverydaySafe</text>
+    <text x="20" y="134" class="title">Product Passport</text>
+    <rect x="296" y="96" width="74" height="28" rx="14" fill="#FEF3C7" />
+    <text x="333" y="114" text-anchor="middle" fill="#92400E" class="badge-text">Draft</text>
+    <text x="20" y="164" class="muted">Safes · Version 1 · 3 fields</text>
+
+    <rect x="20" y="184" width="350" height="62" rx="8" fill="#DBEAFE" />
+    <text x="36" y="208" fill="#1D4ED8" class="label">Draft templates can be edited.</text>
+    <text x="36" y="230" fill="#1D4ED8" class="muted">Fields are locked after activation.</text>
+
+    <rect x="20" y="262" width="112" height="44" rx="8" fill="#FFFFFF" stroke="#0F4C5C" stroke-width="1.5" />
+    <text x="76" y="289" text-anchor="middle" class="link">Edit name</text>
+    <rect x="144" y="262" width="226" height="44" rx="8" class="primary" />
+    <text x="257" y="289" text-anchor="middle" class="primary-text">Activate template</text>
+
+    <text x="20" y="350" class="section">Fields</text>
+    <rect x="254" y="322" width="116" height="44" rx="8" fill="#FFFFFF" stroke="#0F4C5C" stroke-width="1.5" />
+    <text x="312" y="349" text-anchor="middle" class="link">Add fields</text>
+
+    <rect x="20" y="382" width="350" height="126" rx="10" class="surface" />
+    <text x="36" y="410" class="card-title">Brand</text>
+    <text x="36" y="432" class="mono">brand</text>
+    <text x="36" y="456" class="muted">Text · Required</text>
+    <rect x="286" y="398" width="66" height="24" rx="12" fill="#DBEAFE" />
+    <text x="319" y="414" text-anchor="middle" fill="#1D4ED8" class="badge-text">Public</text>
+    <text x="266" y="486" class="link">Edit</text>
+    <text x="310" y="486" class="danger">Remove</text>
+
+    <rect x="20" y="524" width="350" height="126" rx="10" class="surface" />
+    <text x="36" y="552" class="card-title">Security standard</text>
+    <text x="36" y="574" class="mono">security_standard</text>
+    <text x="36" y="598" class="muted">Text · Required</text>
+    <rect x="286" y="540" width="66" height="24" rx="12" fill="#DBEAFE" />
+    <text x="319" y="556" text-anchor="middle" fill="#1D4ED8" class="badge-text">Public</text>
+    <text x="266" y="628" class="link">Edit</text>
+    <text x="310" y="628" class="danger">Remove</text>
+
+    <rect x="20" y="666" width="350" height="98" rx="10" class="surface" />
+    <text x="36" y="694" class="card-title">Internal batch reference</text>
+    <text x="36" y="716" class="mono">batch_reference</text>
+    <rect x="236" y="680" width="116" height="24" rx="12" fill="#E2E8F0" />
+    <text x="294" y="696" text-anchor="middle" fill="#475569" class="badge-text">Manufacturer only</text>
+    <text x="36" y="742" class="muted">Text · Optional</text>
+  </g>
+
+  <!-- 05 Bulk field creation -->
+  <g id="05-bulk-fields" transform="translate(1792 60)">
+    <text x="0" y="-18" class="section">05 · Bulk field creation</text>
+    <rect width="390" height="844" rx="22" class="frame" filter="url(#shadow)" />
+    <rect width="390" height="68" rx="22" fill="#FFFFFF" />
+    <rect y="48" width="390" height="20" fill="#FFFFFF" />
+    <line x1="0" y1="68" x2="390" y2="68" class="divider" />
+    <text x="20" y="41" class="link">← Template</text>
+    <text x="370" y="41" text-anchor="end" class="muted">Draft</text>
+
+    <text x="20" y="110" class="title">Add template fields</text>
+    <text x="20" y="136" class="muted">All fields are saved together.</text>
+
+    <rect x="20" y="158" width="350" height="486" rx="10" class="surface" />
+    <text x="38" y="190" class="card-title">Field 1 of 2</text>
+    <text x="324" y="190" class="danger">Remove</text>
+
+    <text x="38" y="226" class="label">Label</text>
+    <rect x="38" y="238" width="314" height="44" rx="8" class="control" />
+    <text x="52" y="265" class="body">Brand</text>
+
+    <text x="38" y="312" class="label">Code</text>
+    <rect x="38" y="324" width="314" height="44" rx="8" class="control" />
+    <text x="52" y="351" class="mono">brand</text>
+    <text x="38" y="388" class="muted">Lowercase letters, numbers, and underscores.</text>
+
+    <text x="38" y="420" class="label">Data type</text>
+    <rect x="38" y="432" width="150" height="44" rx="8" class="control" />
+    <text x="52" y="459" class="body">Text</text>
+    <text x="174" y="459" text-anchor="end" class="body">⌄</text>
+
+    <text x="204" y="420" class="label">Access level</text>
+    <rect x="204" y="432" width="148" height="44" rx="8" class="control" />
+    <text x="218" y="459" class="body">Public</text>
+    <text x="338" y="459" text-anchor="end" class="body">⌄</text>
+
+    <rect x="38" y="500" width="22" height="22" rx="4" fill="#0F4C5C" />
+    <text x="49" y="516" text-anchor="middle" class="primary-text" font-size="12">✓</text>
+    <text x="70" y="516" class="body">Required field</text>
+
+    <text x="38" y="554" class="label">Maximum length · Optional</text>
+    <rect x="38" y="566" width="314" height="44" rx="8" class="control" />
+    <text x="52" y="593" class="muted">100</text>
+    <text x="38" y="628" class="muted">Field 2 continues below</text>
+
+    <rect x="20" y="664" width="350" height="44" rx="8" fill="#FFFFFF" stroke="#0F4C5C" stroke-width="1.5" />
+    <text x="195" y="691" text-anchor="middle" class="link">+ Add another field</text>
+    <rect x="20" y="724" width="350" height="48" rx="8" class="primary" />
+    <text x="195" y="754" text-anchor="middle" class="primary-text">Save 2 fields</text>
+    <text x="195" y="804" text-anchor="middle" class="link">Cancel</text>
+  </g>
+</svg>
