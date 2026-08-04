@@ -1,0 +1,167 @@
+.page {
+  min-height: 100vh;
+}
+
+.main {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4) var(--space-12);
+}
+
+.backButton,
+.inlineButton {
+  min-height: 2.75rem;
+  padding: var(--space-2) 0;
+  color: var(--color-primary);
+  background: transparent;
+  border: 0;
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+}
+
+.heading {
+  margin-block: var(--space-4) var(--space-6);
+}
+
+.heading h1 {
+  margin-block-end: var(--space-1);
+}
+
+.heading p,
+.helperText,
+.information p {
+  color: var(--color-text-muted);
+}
+
+.card,
+.information {
+  width: 100%;
+  max-width: var(--form-max-width);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.form,
+.field {
+  display: grid;
+}
+
+.form {
+  gap: var(--space-6);
+}
+
+.field {
+  gap: var(--space-1);
+}
+
+.helperText,
+.errorText {
+  margin: 0;
+  font-size: var(--font-size-small);
+}
+
+.errorText {
+  color: var(--color-error);
+}
+
+.categoryError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-error);
+  font-size: var(--font-size-small);
+}
+
+.inlineButton {
+  flex: 0 0 auto;
+  color: var(--color-error);
+}
+
+.formError {
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-small);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-3);
+}
+
+.cancelButton,
+.submitButton {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.cancelButton {
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+}
+
+.submitButton {
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.submitButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.information {
+  margin-block-start: var(--space-6);
+  background: var(--color-info-bg);
+  border-color: var(--color-info-bg);
+}
+
+.information h2 {
+  margin-block-end: var(--space-1);
+  color: var(--color-info);
+  font-size: var(--font-size-component);
+}
+
+.information p {
+  margin: 0;
+  color: var(--color-info);
+}
+
+@media (min-width: 600px) {
+  .main {
+    padding: var(--space-8) var(--space-6) var(--space-12);
+  }
+
+  .card,
+  .information {
+    padding: var(--space-6);
+  }
+
+  .actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .cancelButton,
+  .submitButton {
+    width: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  .main {
+    padding-inline: var(--space-8);
+  }
+}

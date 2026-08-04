@@ -1,8 +1,9 @@
+from copy import deepcopy
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -128,6 +129,10 @@ def update_template(
         template.status = "archived"
     else:
         if data.name is not None:
+            if template.version > 1 and data.name != template.name:
+                raise template_state_error(
+                    "A later template version must keep its family name",
+                )
             template.name = data.name
         if data.status == "active" and not template.fields:
             raise template_state_error(
@@ -139,6 +144,80 @@ def update_template(
     commit_or_conflict(db, "This template version already exists")
     db.refresh(template)
     return template
+
+
+@router.post(
+    "/{template_id}/versions",
+    response_model=PassportTemplateDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_template_version(
+    template_id: UUID,
+    db: DatabaseSession,
+    current_user: Manufacturer,
+) -> PassportTemplate:
+    """Copy an active or archived template into the next draft version."""
+
+    source = get_owned_template(
+        db,
+        template_id,
+        current_user.organization_id,
+        load_fields=True,
+    )
+    if source.status == "draft":
+        raise template_state_error(
+            "Edit the existing draft instead of creating another version",
+        )
+
+    existing_draft = db.scalar(
+        select(PassportTemplate.id).where(
+            PassportTemplate.organization_id == source.organization_id,
+            PassportTemplate.category_id == source.category_id,
+            PassportTemplate.name == source.name,
+            PassportTemplate.status == "draft",
+        ),
+    )
+    if existing_draft is not None:
+        raise template_state_error(
+            "Finish the existing draft before creating another version",
+        )
+
+    latest_version = db.scalar(
+        select(func.max(PassportTemplate.version)).where(
+            PassportTemplate.organization_id == source.organization_id,
+            PassportTemplate.category_id == source.category_id,
+            PassportTemplate.name == source.name,
+        ),
+    )
+    if latest_version is not None and source.version != latest_version:
+        raise template_state_error(
+            "Create a new version from the latest template version",
+        )
+    next_version = (latest_version or source.version) + 1
+
+    new_template = PassportTemplate(
+        organization_id=source.organization_id,
+        category_id=source.category_id,
+        name=source.name,
+        version=next_version,
+        status="draft",
+        fields=[
+            TemplateField(
+                code=field.code,
+                label=field.label,
+                data_type=field.data_type,
+                is_required=field.is_required,
+                display_order=field.display_order,
+                access_level=field.access_level,
+                validation_rules=deepcopy(field.validation_rules),
+            )
+            for field in source.fields
+        ],
+    )
+    db.add(new_template)
+    commit_or_conflict(db, "The next template version already exists")
+    db.refresh(new_template)
+    return new_template
 
 
 @router.post(

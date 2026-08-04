@@ -10,7 +10,34 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',
 })
 
-function TemplateListPage({ accessToken, currentUser, onLogout }) {
+function groupTemplateVersions(templates) {
+  const families = new Map()
+
+  for (const template of templates) {
+    const familyKey = `${template.category_id}:${template.name}`
+    const currentFamily = families.get(familyKey)
+
+    if (!currentFamily) {
+      families.set(familyKey, { latest: template, versionCount: 1 })
+    } else {
+      currentFamily.versionCount += 1
+      if (template.version > currentFamily.latest.version) {
+        currentFamily.latest = template
+      }
+    }
+  }
+
+  return [...families.values()]
+}
+
+function TemplateListPage({
+  accessToken,
+  currentUser,
+  notice,
+  onCreateTemplate,
+  onEditTemplate,
+  onLogout,
+}) {
   const [templates, setTemplates] = useState([])
   const [categories, setCategories] = useState([])
   const [loadState, setLoadState] = useState('loading')
@@ -53,6 +80,7 @@ function TemplateListPage({ accessToken, currentUser, onLogout }) {
   const categoryNames = new Map(
     categories.map((category) => [category.id, category.name]),
   )
+  const templateFamilies = groupTemplateVersions(templates)
 
   return (
     <div className={styles.page}>
@@ -64,12 +92,25 @@ function TemplateListPage({ accessToken, currentUser, onLogout }) {
             <h1>Templates</h1>
             {loadState === 'success' && (
               <p className={styles.count}>
-                {templates.length}{' '}
-                {templates.length === 1 ? 'template' : 'templates'}
+                {templateFamilies.length}{' '}
+                {templateFamilies.length === 1 ? 'template' : 'templates'}
               </p>
             )}
           </div>
+          <button
+            className={styles.primaryButton}
+            type="button"
+            onClick={onCreateTemplate}
+          >
+            Create template
+          </button>
         </div>
+
+        {notice && (
+          <p className={styles.notice} role="status">
+            {notice}
+          </p>
+        )}
 
         {loadState === 'loading' && (
           <section className={styles.stateCard} aria-live="polite">
@@ -95,13 +136,20 @@ function TemplateListPage({ accessToken, currentUser, onLogout }) {
         {loadState === 'success' && templates.length === 0 && (
           <section className={styles.stateCard}>
             <h2>No templates yet</h2>
-            <p>Template creation will be available in the next step.</p>
+            <p>Create a draft to define your first passport structure.</p>
+            <button
+              className={styles.primaryButton}
+              type="button"
+              onClick={onCreateTemplate}
+            >
+              Create your first template
+            </button>
           </section>
         )}
 
-        {loadState === 'success' && templates.length > 0 && (
+        {loadState === 'success' && templateFamilies.length > 0 && (
           <section className={styles.templateGrid} aria-label="Passport templates">
-            {templates.map((template) => (
+            {templateFamilies.map(({ latest: template, versionCount }) => (
               <article className={styles.templateCard} key={template.id}>
                 <div className={styles.cardHeading}>
                   <h2>{template.name}</h2>
@@ -117,14 +165,23 @@ function TemplateListPage({ accessToken, currentUser, onLogout }) {
                     </dd>
                   </div>
                   <div>
-                    <dt>Version</dt>
-                    <dd>{template.version}</dd>
+                    <dt>Versions</dt>
+                    <dd>
+                      {versionCount} · Latest v{template.version}
+                    </dd>
                   </div>
                   <div>
                     <dt>Created</dt>
                     <dd>{dateFormatter.format(new Date(template.created_at))}</dd>
                   </div>
                 </dl>
+                <button
+                  className={styles.editButton}
+                  type="button"
+                  onClick={() => onEditTemplate(template.id)}
+                >
+                  {template.status === 'draft' ? 'Edit template' : 'View template'}
+                </button>
               </article>
             ))}
           </section>

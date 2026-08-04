@@ -10,7 +10,11 @@
 }
 
 .pageHeading {
+  display: flex;
+  flex-direction: column;
   margin-block-end: var(--space-6);
+  align-items: flex-start;
+  gap: var(--space-4);
 }
 
 .pageHeading h1 {
@@ -20,6 +24,15 @@
 .count {
   margin: 0;
   color: var(--color-text-muted);
+}
+
+.notice {
+  max-width: var(--form-max-width);
+  margin-block: 0 var(--space-6);
+  padding: var(--space-3);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border-radius: var(--radius-control);
 }
 
 .templateGrid {
@@ -71,6 +84,23 @@
   margin: 0;
 }
 
+.editButton {
+  width: 100%;
+  min-height: 2.75rem;
+  margin-block-start: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.editButton:hover {
+  color: var(--color-surface);
+  background: var(--color-primary);
+}
+
 .stateCard {
   max-width: var(--form-max-width);
 }
@@ -98,6 +128,12 @@
   .templateCard,
   .stateCard {
     padding: var(--space-6);
+  }
+
+  .pageHeading {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 }
 

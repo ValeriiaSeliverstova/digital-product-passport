@@ -269,6 +269,99 @@ def test_active_template_fields_cannot_change(
     assert archive.json()["status"] == "archived"
 
 
+def test_active_template_can_be_copied_to_next_draft_version(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    _, headers = create_user_and_headers(
+        db_session,
+        "manufacturer_user",
+        organization_name="Manufacturer A",
+    )
+    category = create_category(db_session)
+    source = create_template_through_api(client, headers, category)
+    source_id = source["id"]
+
+    field_response = client.post(
+        f"/api/templates/{source_id}/fields",
+        headers=headers,
+        json=[valid_field_data()],
+    )
+    source_field = field_response.json()[0]
+    client.put(
+        f"/api/templates/{source_id}",
+        headers=headers,
+        json={"status": "active"},
+    )
+
+    response = client.post(
+        f"/api/templates/{source_id}/versions",
+        headers=headers,
+    )
+
+    assert response.status_code == 201
+    new_version = response.json()
+    assert new_version["id"] != source_id
+    assert new_version["version"] == 2
+    assert new_version["status"] == "draft"
+    assert new_version["fields"][0]["id"] != source_field["id"]
+    assert new_version["fields"][0]["code"] == source_field["code"]
+    assert new_version["fields"][0]["validation_rules"] == {
+        "min": 0,
+        "max": 2000,
+    }
+
+    rename_response = client.put(
+        f"/api/templates/{new_version['id']}",
+        headers=headers,
+        json={"name": "Renamed family"},
+    )
+    assert rename_response.status_code == 409
+
+    duplicate_draft = client.post(
+        f"/api/templates/{source_id}/versions",
+        headers=headers,
+    )
+    assert duplicate_draft.status_code == 409
+
+    client.put(
+        f"/api/templates/{new_version['id']}",
+        headers=headers,
+        json={"status": "active"},
+    )
+    old_source = client.post(
+        f"/api/templates/{source_id}/versions",
+        headers=headers,
+    )
+    assert old_source.status_code == 409
+    assert old_source.json() == {
+        "detail": "Create a new version from the latest template version",
+    }
+
+
+def test_draft_template_cannot_create_another_version(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    _, headers = create_user_and_headers(
+        db_session,
+        "manufacturer_user",
+        organization_name="Manufacturer A",
+    )
+    category = create_category(db_session)
+    template = create_template_through_api(client, headers, category)
+
+    response = client.post(
+        f"/api/templates/{template['id']}/versions",
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "Edit the existing draft instead of creating another version",
+    }
+
+
 def test_field_validation_rejects_unsupported_rules(
     client: TestClient,
     db_session: Session,

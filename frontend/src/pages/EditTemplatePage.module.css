@@ -1,0 +1,358 @@
+.page {
+  min-height: 100vh;
+}
+
+.main {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4) var(--space-12);
+}
+
+.backButton,
+.textButton,
+.deleteButton,
+.archiveButton {
+  min-height: 2.75rem;
+  padding: var(--space-2) 0;
+  background: transparent;
+  border: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.backButton,
+.textButton {
+  color: var(--color-primary);
+}
+
+.deleteButton {
+  color: var(--color-error);
+}
+
+.archiveButton {
+  width: 100%;
+  color: var(--color-error);
+}
+
+.heading {
+  margin-block: var(--space-4) var(--space-6);
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.titleRow h1,
+.heading p,
+.sectionHeading h2,
+.sectionHeading p,
+.fieldHeading h3,
+.readonlyMessage,
+.rulesSummary,
+.deleteConfirmation p {
+  margin: 0;
+}
+
+.heading p,
+.sectionHeading p,
+.rulesSummary,
+.readonlyMessage {
+  color: var(--color-text-muted);
+}
+
+.statusHint {
+  margin: 0;
+  color: var(--color-warning);
+  font-size: var(--font-size-small);
+}
+
+.statusConfirmation {
+  display: grid;
+  gap: var(--space-4);
+  margin-block-start: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-warning-bg);
+  border-radius: var(--radius-control);
+}
+
+.statusConfirmation h3,
+.statusConfirmation p {
+  margin: 0;
+}
+
+.statusConfirmation p {
+  color: var(--color-text-muted);
+}
+
+.confirmationActions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-2);
+}
+
+.versionList {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+.versionButton {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-control-border);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+}
+
+.versionButton:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.versionButton[aria-current="page"] {
+  background: var(--color-info-bg);
+  border-color: var(--color-info);
+  opacity: 1;
+}
+
+.notice,
+.error {
+  margin-block: 0 var(--space-6);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+}
+
+.notice {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.card,
+.fieldFormCard,
+.fieldCard,
+.emptyState,
+.stateCard {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.card {
+  margin-block-end: var(--space-8);
+}
+
+.sectionHeading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-block-end: var(--space-4);
+}
+
+.nameForm,
+.nameField {
+  display: grid;
+}
+
+.nameForm {
+  gap: var(--space-3);
+}
+
+.nameField {
+  flex: 1;
+  gap: var(--space-1);
+}
+
+.primaryButton,
+.secondaryButton,
+.confirmDeleteButton {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.primaryButton {
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.secondaryButton {
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+}
+
+.confirmDeleteButton {
+  color: var(--color-surface);
+  background: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+.fieldFormCard {
+  max-width: var(--form-max-width);
+  margin-block-end: var(--space-6);
+}
+
+.fieldFormCard h3 {
+  margin-block: 0 var(--space-4);
+}
+
+.fieldList {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.fieldHeading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.fieldHeading code {
+  color: var(--color-text-muted);
+}
+
+.fieldActions {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.fieldMetadata {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--color-border);
+}
+
+.fieldMetadata dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+.fieldMetadata dd {
+  margin: 0;
+}
+
+.rulesSummary {
+  padding-block-start: var(--space-4);
+  font-size: var(--font-size-small);
+}
+
+.emptyState {
+  max-width: var(--form-max-width);
+}
+
+.emptyState h3 {
+  margin-block: 0 var(--space-1);
+}
+
+.emptyState p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.deleteConfirmation {
+  display: grid;
+  gap: var(--space-3);
+  margin-block-start: var(--space-4);
+  padding: var(--space-3);
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-radius: var(--radius-control);
+}
+
+.deleteConfirmation > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+@media (min-width: 600px) {
+  .main {
+    padding: var(--space-8) var(--space-6) var(--space-12);
+  }
+
+  .card,
+  .fieldFormCard,
+  .fieldCard,
+  .emptyState,
+  .stateCard {
+    padding: var(--space-6);
+  }
+
+  .sectionHeading,
+  .fieldHeading,
+  .nameForm {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .nameForm {
+    display: flex;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .confirmDeleteButton,
+  .archiveButton {
+    width: auto;
+  }
+
+  .fieldHeading {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .deleteConfirmation > div {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .statusConfirmation {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .confirmationActions {
+    flex-direction: row;
+  }
+
+  .versionList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .main {
+    padding-inline: var(--space-8);
+  }
+
+  .fieldList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+}
