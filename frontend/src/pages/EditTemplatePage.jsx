@@ -105,8 +105,7 @@ function EditTemplatePage({
             listData.templates
               .filter(
                 (item) =>
-                  item.category_id === templateData.category_id &&
-                  item.name === templateData.name,
+                  item.template_family_id === templateData.template_family_id,
               )
               .sort((first, second) => second.version - first.version),
           )
@@ -164,9 +163,10 @@ function EditTemplatePage({
       })
       setTemplate((current) => ({ ...current, name: updatedTemplate.name }))
       setVersions((current) =>
-        current.map((version) =>
-          version.id === updatedTemplate.id ? updatedTemplate : version,
-        ),
+        current.map((version) => ({
+          ...version,
+          name: updatedTemplate.name,
+        })),
       )
       setNotice('Template name was saved.')
     } catch (saveError) {
@@ -297,6 +297,13 @@ function EditTemplatePage({
       : null
   const draftVersion = versions.find((version) => version.status === 'draft')
   const latestVersion = versions[0]
+  const canCreateVersion =
+    template?.status !== 'draft' &&
+    !draftVersion &&
+    template?.id === latestVersion?.id
+  const hasAnotherDraft = draftVersion && draftVersion.id !== template?.id
+  const isOlderVersion =
+    !draftVersion && template?.id !== latestVersion?.id
 
   return (
     <div className={styles.page}>
@@ -359,9 +366,7 @@ function EditTemplatePage({
                   <p>Open a version to view its exact fields and status.</p>
                 </div>
 
-                {template.status !== 'draft' &&
-                  !draftVersion &&
-                  template.id === latestVersion?.id && (
+                {canCreateVersion && (
                   <button
                     className={styles.primaryButton}
                     type="button"
@@ -371,21 +376,55 @@ function EditTemplatePage({
                     {isCreatingVersion ? 'Creating…' : 'Create new version'}
                   </button>
                 )}
+
+                {template.status === 'draft' && (
+                  <button
+                    className={styles.secondaryButton}
+                    type="button"
+                    disabled
+                  >
+                    Create new version
+                  </button>
+                )}
+
+                {hasAnotherDraft && (
+                  <button
+                    className={styles.secondaryButton}
+                    type="button"
+                    onClick={() => onSelectVersion(draftVersion.id)}
+                  >
+                    Open draft version {draftVersion.version}
+                  </button>
+                )}
+
+                {isOlderVersion && (
+                  <button
+                    className={styles.secondaryButton}
+                    type="button"
+                    onClick={() => onSelectVersion(latestVersion.id)}
+                  >
+                    Open latest version {latestVersion.version}
+                  </button>
+                )}
               </div>
 
-              {draftVersion && template.status !== 'draft' && (
+              {template.status === 'draft' && (
+                <p className={styles.statusHint}>
+                  Activate this draft before creating the next version.
+                </p>
+              )}
+
+              {hasAnotherDraft && (
                 <p className={styles.statusHint}>
                   Version {draftVersion.version} is already an editable draft.
                 </p>
               )}
 
-              {!draftVersion &&
-                template.status !== 'draft' &&
-                template.id !== latestVersion?.id && (
-                  <p className={styles.statusHint}>
-                    Open the latest version to create the next draft.
-                  </p>
-                )}
+              {isOlderVersion && (
+                <p className={styles.statusHint}>
+                  New versions must be copied from the latest version.
+                </p>
+              )}
 
               <div className={styles.versionList}>
                 {versions.map((version) => (
@@ -408,40 +447,32 @@ function EditTemplatePage({
               <div className={styles.sectionHeading}>
                 <div>
                   <h2 id="details-title">Template details</h2>
-                  <p>The category and version cannot change after creation.</p>
+                  <p>
+                    The family name applies to every version. Category and
+                    version numbers cannot change after creation.
+                  </p>
                 </div>
               </div>
 
-              {template.status === 'draft' && template.version === 1 ? (
-                <form className={styles.nameForm} onSubmit={handleNameSave}>
-                  <div className={styles.nameField}>
-                    <label htmlFor="template-name">Template name</label>
-                    <input
-                      id="template-name"
-                      maxLength="255"
-                      value={name}
-                      onChange={(event) => setName(event.target.value)}
-                      required
-                    />
-                  </div>
-                  <button
-                    className={styles.secondaryButton}
-                    type="submit"
-                    disabled={isSavingName || name.trim() === template.name}
-                  >
-                    {isSavingName ? 'Saving…' : 'Save name'}
-                  </button>
-                </form>
-              ) : template.status === 'draft' ? (
-                <p className={styles.readonlyMessage}>
-                  Later versions keep the same name so they remain together in
-                  this version history.
-                </p>
-              ) : (
-                <p className={styles.readonlyMessage}>
-                  This template is read-only because it is {template.status}.
-                </p>
-              )}
+              <form className={styles.nameForm} onSubmit={handleNameSave}>
+                <div className={styles.nameField}>
+                  <label htmlFor="template-name">Template family name</label>
+                  <input
+                    id="template-name"
+                    maxLength="255"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    required
+                  />
+                </div>
+                <button
+                  className={styles.secondaryButton}
+                  type="submit"
+                  disabled={isSavingName || name.trim() === template.name}
+                >
+                  {isSavingName ? 'Saving…' : 'Save name'}
+                </button>
+              </form>
             </section>
 
             <section className={styles.card} aria-labelledby="lifecycle-title">

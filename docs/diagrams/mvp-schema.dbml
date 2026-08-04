@@ -29,12 +29,18 @@ Table product_categories {
 
 Table passport_templates {
   id uuid [pk]
+  template_family_id uuid [not null]
   organization_id uuid [ref: > organizations.id]
   category_id uuid [ref: > product_categories.id]
   name varchar
   version integer
   status varchar
   created_at timestamp
+
+  indexes {
+    (template_family_id, version) [unique]
+    (organization_id, category_id, name, version) [unique]
+  }
 }
 
 Table template_fields {

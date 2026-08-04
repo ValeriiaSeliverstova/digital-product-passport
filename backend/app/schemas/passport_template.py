@@ -21,7 +21,7 @@ class PassportTemplateCreate(BaseModel):
 
 
 class PassportTemplateUpdate(BaseModel):
-    """Editable template metadata and lifecycle status."""
+    """Editable family name and template-version lifecycle status."""
 
     name: str | None = Field(default=None, min_length=1, max_length=255)
     status: TemplateStatus | None = None
@@ -39,6 +39,7 @@ class PassportTemplateResponse(BaseModel):
     """Passport template metadata returned by list and write endpoints."""
 
     id: UUID
+    template_family_id: UUID
     organization_id: UUID
     category_id: UUID
     name: str

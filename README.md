@@ -17,6 +17,7 @@ Safe equipment is used as the primary case study.
 ## Planned Features
 
 - configurable passport templates;
+- versioned template families with immutable Active field definitions;
 - product models, batches, and individual items;
 - QR code and NFC-based access;
 - document and certificate management;
@@ -26,7 +27,9 @@ Safe equipment is used as the primary case study.
 
 ## Project Status
 
-Planning and architecture design.
+The MVP backend includes authentication, product categories, configurable and
+versioned passport templates, and template-field management. The React frontend
+currently supports login and the manufacturer template workflow.
 
 ## Security
 

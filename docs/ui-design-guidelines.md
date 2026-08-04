@@ -315,15 +315,23 @@ Draft -> Active -> Archived
 ```
 
 - A new template is always Draft.
-- Only Draft template metadata and fields are editable.
+- Only Draft template fields are editable. The template family name is
+  editable metadata and changes consistently across all versions.
 - Activation is unavailable until at least one field exists.
 - Activation confirmation MUST show template name, version, field count, and
   “Fields cannot be changed after activation.”
 - Active templates MAY only be archived; they cannot return to Draft.
-- Archived templates are visible for traceability and are read-only.
+- Archived template structures are visible for traceability and are read-only;
+  their shared family name may still be corrected.
 - Edit controls MUST be removed from Active and Archived field views. A short
   explanation replaces them; disabled controls alone are insufficient.
-- The UI MUST NOT offer “Create new version” until the backend supports it.
+- The Template list MUST show one card per `template_family_id`, with the latest
+  version and the total version count.
+- Template details MUST show the complete version history.
+- “Create new version” is available only from the latest Active or Archived
+  version when no Draft exists. It copies fields into the next Draft.
+- When a Draft already exists, the UI provides “Open draft version” instead of
+  creating another Draft.
 
 ### 7.2 Template field editor
 
@@ -378,9 +386,9 @@ tokens and component rules.
 | Screen | Required content | Mobile rule | From 900 px |
 | --- | --- | --- | --- |
 | Login | Product name, email, password, Show/Hide password, Sign in, generic error area | One column, form max width 26rem, full-width submit | Remains a focused form; extra decoration must not dominate |
-| Template list | Title, Create action, status/search controls when implemented, name, category, version, status, created date, empty state | Templates are cards | A semantic table may be used |
+| Template list | Title, Create action, status/search controls when implemented, family name, category, latest version, version count, latest status, created date, empty state | Template families are cards | A semantic table may be used |
 | Create template | Name, active category selection, version, Cancel, Create draft | One readable column | Form remains max 42rem; do not stretch controls |
-| Template details | Back navigation, name, category, version, status, lifecycle actions, ordered fields | Metadata and actions before stacked field cards | Actions may align horizontally; fields may use denser rows |
+| Template details | Back navigation, editable family name, category, selected version, version history, status, lifecycle actions, ordered fields | Metadata and actions before stacked field cards | Actions may align horizontally; fields may use denser rows |
 | Bulk field editor | Field count, repeated field editors, Add field, Cancel, Save count, error summary | One field card per row; actions stack | Related controls may form a grid |
 | Public passport | Manufacturer, product name, model, public identifier, status, public attributes, documents, lifecycle information, data source/update date | Optimized for QR entry and one-column reading | Content remains centred; sections may use two columns only when meaningful |
 

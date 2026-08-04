@@ -106,6 +106,14 @@ Defines the configurable structure of a Digital Product Passport for a selected 
 
 A manufacturer may create multiple templates for the same category.
 
+Each template may have multiple versions. Every version has a unique `id`, and
+all versions in the same family share a stable `template_family_id`. The family
+name is editable metadata and is kept consistent across its versions.
+
+New templates start as Draft. Activating a version locks its fields. A new
+version copies the latest completed version and its fields into the next Draft
+version; only one Draft is allowed per family.
+
 Example:
 
 ```text
@@ -165,6 +173,8 @@ Represents a QR code, NFC tag, or another carrier connected to a product item.
 - A product category can contain child categories.
 - A product category can have multiple passport templates.
 - A passport template belongs to one organization.
+- Each passport template row is one version and belongs to one template family.
+- A template family can contain multiple ordered versions.
 - A passport template contains multiple template fields.
 - A product model belongs to one product category.
 - A product model uses one passport template.
@@ -205,6 +215,9 @@ Retrieve Product Passport
 3. Each passport template belongs to one organization and one product category.
 
 4. A manufacturer may create multiple passport templates for the same category.
+
+4a. Versions of one template share a stable `template_family_id`; only Draft
+versions may change fields.
 
 5. A product model must use a template assigned to the same category.
 
@@ -261,7 +274,12 @@ POST /api/templates
 GET  /api/templates
 GET  /api/templates/{id}
 PUT  /api/templates/{id}
+POST /api/templates/{id}/versions
 ```
+
+The version endpoint copies the latest Active or Archived version and its
+fields into the next Draft version. It rejects older source versions and
+families that already contain a Draft.
 
 ### Template fields
 

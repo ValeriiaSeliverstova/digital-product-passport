@@ -14,7 +14,7 @@ function groupTemplateVersions(templates) {
   const families = new Map()
 
   for (const template of templates) {
-    const familyKey = `${template.category_id}:${template.name}`
+    const familyKey = template.template_family_id
     const currentFamily = families.get(familyKey)
 
     if (!currentFamily) {

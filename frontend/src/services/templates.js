@@ -32,7 +32,7 @@ export function getTemplate(accessToken, templateId) {
   return apiRequest(`/api/templates/${templateId}`, { token: accessToken })
 }
 
-/** Update editable template metadata, such as the draft name. */
+/** Update the shared family name or this version's lifecycle status. */
 export function updateTemplate(accessToken, templateId, templateData) {
   return apiRequest(`/api/templates/${templateId}`, {
     method: 'PUT',

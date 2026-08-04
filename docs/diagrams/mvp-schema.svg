@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2280" height="900" viewBox="0 0 2280 900">
+  <style>
+    .background { fill: #f8fafc; }
+    .relation { fill: none; stroke: #94a3b8; stroke-width: 2; }
+    .table { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; }
+    .header { fill: #0f4c5c; }
+    .title { fill: #ffffff; font: 700 18px ui-sans-serif, system-ui, sans-serif; }
+    .field { fill: #17232a; font: 15px ui-monospace, SFMono-Regular, monospace; }
+    .type { fill: #52616b; font: 14px ui-monospace, SFMono-Regular, monospace; text-anchor: end; }
+    .key { fill: #1d4ed8; font-weight: 700; }
+  </style>
+
+  <rect class="background" width="2280" height="900" />
+
+  <!-- Relationships are drawn behind the tables. -->
+  <path class="relation" d="M310 120 H390 V135 H470" />
+  <path class="relation" d="M330 345 H400 V165 H470" />
+  <path class="relation" d="M330 345 H720 V175 H840" />
+  <path class="relation" d="M350 610 H760 V205 H840" />
+  <path class="relation" d="M1170 175 H1250" />
+  <path class="relation" d="M330 345 H720 V530 H840" />
+  <path class="relation" d="M350 610 H740 V560 H840" />
+  <path class="relation" d="M1170 205 V590 H1250" />
+  <path class="relation" d="M1170 560 H1250" />
+  <path class="relation" d="M1570 530 H1640" />
+  <path class="relation" d="M1570 530 H1600 V745 H1640" />
+
+  <!-- Roles -->
+  <g transform="translate(40 60)">
+    <rect class="table" width="270" height="130" rx="8" />
+    <path class="header" d="M8 0 H262 Q270 0 270 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">roles</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="252" y="70">uuid</text>
+    <text class="field" x="16" y="104">name</text><text class="type" x="252" y="104">varchar</text>
+  </g>
+
+  <!-- Organizations -->
+  <g transform="translate(40 260)">
+    <rect class="table" width="290" height="190" rx="8" />
+    <path class="header" d="M8 0 H282 Q290 0 290 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">organizations</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="272" y="70">uuid</text>
+    <text class="field" x="16" y="104">name</text><text class="type" x="272" y="104">varchar</text>
+    <text class="field" x="16" y="138">country</text><text class="type" x="272" y="138">varchar</text>
+    <text class="field" x="16" y="172">created_at</text><text class="type" x="272" y="172">timestamp</text>
+  </g>
+
+  <!-- Categories -->
+  <g transform="translate(40 500)">
+    <rect class="table" width="310" height="230" rx="8" />
+    <path class="header" d="M8 0 H302 Q310 0 310 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">product_categories</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="292" y="70">uuid</text>
+    <text class="field" x="16" y="104">parent_category_id (FK)</text><text class="type" x="292" y="104">uuid</text>
+    <text class="field" x="16" y="138">code</text><text class="type" x="292" y="138">varchar</text>
+    <text class="field" x="16" y="172">name</text><text class="type" x="292" y="172">varchar</text>
+    <text class="field" x="16" y="206">is_active</text><text class="type" x="292" y="206">boolean</text>
+  </g>
+
+  <!-- Users -->
+  <g transform="translate(470 60)">
+    <rect class="table" width="310" height="250" rx="8" />
+    <path class="header" d="M8 0 H302 Q310 0 310 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">users</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="292" y="70">uuid</text>
+    <text class="field" x="16" y="104">organization_id (FK)</text><text class="type" x="292" y="104">uuid</text>
+    <text class="field" x="16" y="138">role_id (FK)</text><text class="type" x="292" y="138">uuid</text>
+    <text class="field" x="16" y="172">email</text><text class="type" x="292" y="172">varchar</text>
+    <text class="field" x="16" y="206">password_hash</text><text class="type" x="292" y="206">varchar</text>
+    <text class="field" x="16" y="240">status</text><text class="type" x="292" y="240">varchar</text>
+  </g>
+
+  <!-- Passport templates -->
+  <g transform="translate(840 60)">
+    <rect class="table" width="330" height="300" rx="8" />
+    <path class="header" d="M8 0 H322 Q330 0 330 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">passport_templates</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="312" y="70">uuid</text>
+    <text class="field key" x="16" y="104">template_family_id</text><text class="type" x="312" y="104">uuid</text>
+    <text class="field" x="16" y="138">organization_id (FK)</text><text class="type" x="312" y="138">uuid</text>
+    <text class="field" x="16" y="172">category_id (FK)</text><text class="type" x="312" y="172">uuid</text>
+    <text class="field" x="16" y="206">name</text><text class="type" x="312" y="206">varchar</text>
+    <text class="field" x="16" y="240">version</text><text class="type" x="312" y="240">integer</text>
+    <text class="field" x="16" y="274">status</text><text class="type" x="312" y="274">varchar</text>
+  </g>
+
+  <!-- Template fields -->
+  <g transform="translate(1250 40)">
+    <rect class="table" width="340" height="340" rx="8" />
+    <path class="header" d="M8 0 H332 Q340 0 340 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">template_fields</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="322" y="70">uuid</text>
+    <text class="field" x="16" y="104">template_id (FK)</text><text class="type" x="322" y="104">uuid</text>
+    <text class="field" x="16" y="138">code</text><text class="type" x="322" y="138">varchar</text>
+    <text class="field" x="16" y="172">label</text><text class="type" x="322" y="172">varchar</text>
+    <text class="field" x="16" y="206">data_type</text><text class="type" x="322" y="206">varchar</text>
+    <text class="field" x="16" y="240">is_required</text><text class="type" x="322" y="240">boolean</text>
+    <text class="field" x="16" y="274">display_order</text><text class="type" x="322" y="274">integer</text>
+    <text class="field" x="16" y="308">validation_rules</text><text class="type" x="322" y="308">jsonb</text>
+  </g>
+
+  <!-- Product models -->
+  <g transform="translate(840 460)">
+    <rect class="table" width="330" height="270" rx="8" />
+    <path class="header" d="M8 0 H322 Q330 0 330 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">product_models</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="312" y="70">uuid</text>
+    <text class="field" x="16" y="104">organization_id (FK)</text><text class="type" x="312" y="104">uuid</text>
+    <text class="field" x="16" y="138">category_id (FK)</text><text class="type" x="312" y="138">uuid</text>
+    <text class="field" x="16" y="172">template_id (FK)</text><text class="type" x="312" y="172">uuid</text>
+    <text class="field" x="16" y="206">model_code</text><text class="type" x="312" y="206">varchar</text>
+    <text class="field" x="16" y="240">name / status</text><text class="type" x="312" y="240">varchar</text>
+  </g>
+
+  <!-- Product items -->
+  <g transform="translate(1250 450)">
+    <rect class="table" width="340" height="300" rx="8" />
+    <path class="header" d="M8 0 H332 Q340 0 340 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">product_items</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="322" y="70">uuid</text>
+    <text class="field" x="16" y="104">model_id (FK)</text><text class="type" x="322" y="104">uuid</text>
+    <text class="field" x="16" y="138">serial_number</text><text class="type" x="322" y="138">varchar</text>
+    <text class="field" x="16" y="172">public_id</text><text class="type" x="322" y="172">uuid</text>
+    <text class="field" x="16" y="206">manufacture_date</text><text class="type" x="322" y="206">date</text>
+    <text class="field" x="16" y="240">status</text><text class="type" x="322" y="240">varchar</text>
+    <text class="field" x="16" y="274">passport_data</text><text class="type" x="322" y="274">jsonb</text>
+  </g>
+
+  <!-- Lifecycle events -->
+  <g transform="translate(1640 80)">
+    <rect class="table" width="330" height="250" rx="8" />
+    <path class="header" d="M8 0 H322 Q330 0 330 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">lifecycle_events</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="312" y="70">uuid</text>
+    <text class="field" x="16" y="104">item_id (FK)</text><text class="type" x="312" y="104">uuid</text>
+    <text class="field" x="16" y="138">event_type</text><text class="type" x="312" y="138">varchar</text>
+    <text class="field" x="16" y="172">occurred_at</text><text class="type" x="312" y="172">timestamp</text>
+    <text class="field" x="16" y="206">description</text><text class="type" x="312" y="206">text</text>
+    <text class="field" x="16" y="240">event_data</text><text class="type" x="312" y="240">jsonb</text>
+  </g>
+
+  <!-- Data carriers -->
+  <g transform="translate(1640 500)">
+    <rect class="table" width="330" height="250" rx="8" />
+    <path class="header" d="M8 0 H322 Q330 0 330 8 V42 H0 V8 Q0 0 8 0" />
+    <text class="title" x="16" y="27">data_carriers</text>
+    <text class="field key" x="16" y="70">id (PK)</text><text class="type" x="312" y="70">uuid</text>
+    <text class="field" x="16" y="104">item_id (FK)</text><text class="type" x="312" y="104">uuid</text>
+    <text class="field" x="16" y="138">carrier_type</text><text class="type" x="312" y="138">varchar</text>
+    <text class="field" x="16" y="172">public_token</text><text class="type" x="312" y="172">uuid</text>
+    <text class="field" x="16" y="206">status</text><text class="type" x="312" y="206">varchar</text>
+    <text class="field" x="16" y="240">issued_at</text><text class="type" x="312" y="240">timestamp</text>
+  </g>
+
+  <text x="40" y="850" fill="#52616b" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16">
+    Exact constraints and field definitions: mvp-schema.dbml
+  </text>
+</svg>

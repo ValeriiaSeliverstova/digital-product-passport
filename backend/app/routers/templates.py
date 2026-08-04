@@ -3,7 +3,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -109,7 +109,7 @@ def update_template(
     db: DatabaseSession,
     current_user: Manufacturer,
 ) -> PassportTemplate:
-    """Update draft metadata or move a template through its lifecycle."""
+    """Rename a template family or move one version through its lifecycle."""
 
     template = get_owned_template(
         db,
@@ -118,28 +118,35 @@ def update_template(
         load_fields=True,
     )
 
-    if template.status == "archived":
-        raise template_state_error("Archived templates cannot be changed")
+    if template.status == "archived" and data.status is not None:
+        raise template_state_error("Archived template status cannot be changed")
 
     if template.status == "active":
-        if data.name is not None or data.status != "archived":
+        if data.status not in {None, "archived"}:
             raise template_state_error(
-                "Active templates can only be archived",
+                "Active templates cannot return to draft",
             )
-        template.status = "archived"
-    else:
-        if data.name is not None:
-            if template.version > 1 and data.name != template.name:
-                raise template_state_error(
-                    "A later template version must keep its family name",
-                )
-            template.name = data.name
+        if data.status == "archived":
+            template.status = "archived"
+    elif template.status == "draft":
         if data.status == "active" and not template.fields:
             raise template_state_error(
                 "A template needs at least one field before activation",
             )
         if data.status is not None:
             template.status = data.status
+
+    if data.name is not None:
+        # A name describes the family, so keep it consistent across versions.
+        db.execute(
+            update(PassportTemplate)
+            .where(
+                PassportTemplate.template_family_id
+                == template.template_family_id,
+            )
+            .values(name=data.name),
+        )
+        template.name = data.name
 
     commit_or_conflict(db, "This template version already exists")
     db.refresh(template)
@@ -171,9 +178,7 @@ def create_template_version(
 
     existing_draft = db.scalar(
         select(PassportTemplate.id).where(
-            PassportTemplate.organization_id == source.organization_id,
-            PassportTemplate.category_id == source.category_id,
-            PassportTemplate.name == source.name,
+            PassportTemplate.template_family_id == source.template_family_id,
             PassportTemplate.status == "draft",
         ),
     )
@@ -184,9 +189,7 @@ def create_template_version(
 
     latest_version = db.scalar(
         select(func.max(PassportTemplate.version)).where(
-            PassportTemplate.organization_id == source.organization_id,
-            PassportTemplate.category_id == source.category_id,
-            PassportTemplate.name == source.name,
+            PassportTemplate.template_family_id == source.template_family_id,
         ),
     )
     if latest_version is not None and source.version != latest_version:
@@ -196,6 +199,7 @@ def create_template_version(
     next_version = (latest_version or source.version) + 1
 
     new_template = PassportTemplate(
+        template_family_id=source.template_family_id,
         organization_id=source.organization_id,
         category_id=source.category_id,
         name=source.name,

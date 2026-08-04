@@ -120,6 +120,7 @@ def test_template_creation_uses_authenticated_organization(
     template = create_template_through_api(client, headers, category)
 
     assert template["organization_id"] == str(user.organization_id)
+    assert template["template_family_id"]
     assert template["status"] == "draft"
     assert template["version"] == 1
 
@@ -293,6 +294,12 @@ def test_active_template_can_be_copied_to_next_draft_version(
         headers=headers,
         json={"status": "active"},
     )
+    active_rename = client.put(
+        f"/api/templates/{source_id}",
+        headers=headers,
+        json={"name": "Updated Standard Safe Passport"},
+    )
+    assert active_rename.status_code == 200
 
     response = client.post(
         f"/api/templates/{source_id}/versions",
@@ -302,6 +309,7 @@ def test_active_template_can_be_copied_to_next_draft_version(
     assert response.status_code == 201
     new_version = response.json()
     assert new_version["id"] != source_id
+    assert new_version["template_family_id"] == source["template_family_id"]
     assert new_version["version"] == 2
     assert new_version["status"] == "draft"
     assert new_version["fields"][0]["id"] != source_field["id"]
@@ -316,7 +324,12 @@ def test_active_template_can_be_copied_to_next_draft_version(
         headers=headers,
         json={"name": "Renamed family"},
     )
-    assert rename_response.status_code == 409
+    assert rename_response.status_code == 200
+    source_after_rename = client.get(
+        f"/api/templates/{source_id}",
+        headers=headers,
+    )
+    assert source_after_rename.json()["name"] == "Renamed family"
 
     duplicate_draft = client.post(
         f"/api/templates/{source_id}/versions",

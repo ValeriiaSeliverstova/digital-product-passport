@@ -35,6 +35,11 @@ class PassportTemplate(Base):
             "version",
             name="uq_template_owner_category_name_version",
         ),
+        UniqueConstraint(
+            "template_family_id",
+            "version",
+            name="uq_template_family_version",
+        ),
         CheckConstraint("version >= 1", name="ck_template_version_positive"),
         CheckConstraint(
             "status IN ('draft', 'active', 'archived')",
@@ -45,6 +50,13 @@ class PassportTemplate(Base):
     id: Mapped[UUID] = mapped_column(
         primary_key=True,
         default=uuid4,
+    )
+
+    # Every version has its own id, while this id connects the full history.
+    template_family_id: Mapped[UUID] = mapped_column(
+        default=uuid4,
+        index=True,
+        nullable=False,
     )
 
     organization_id: Mapped[UUID] = mapped_column(
