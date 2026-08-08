@@ -1,10 +1,10 @@
 import styles from './AppHeader.module.css'
 
 const navigationItems = [
+  { id: 'profile', label: 'Profile' },
   { id: 'templates', label: 'Templates' },
   { id: 'product-models', label: 'Product models' },
   { id: 'product-items', label: 'Product items' },
-  { id: 'profile', label: 'Profile' },
 ]
 
 function AppHeader({ currentSection, currentUser, onLogout, onNavigate }) {
