@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import AppHeader from '../components/AppHeader.jsx'
+import NfcWriter from '../components/NfcWriter.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { ApiError } from '../services/api.js'
 import {
@@ -416,6 +417,12 @@ function ProductItemFormPage({
                   </a>
                 </p>
               </section>
+            )}
+
+            {item?.status === 'published' && (
+              <NfcWriter
+                passportUrl={`${window.location.origin}/passport/${item.public_id}`}
+              />
             )}
 
             {item?.status === 'published' && (
