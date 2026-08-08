@@ -21,3 +21,18 @@ export function login(email, password) {
 export function getCurrentUser(accessToken) {
   return apiRequest('/api/users/me', { token: accessToken })
 }
+
+/** Verify the existing password before replacing it for the current user. */
+export function changePassword(accessToken, currentPassword, newPassword) {
+  return apiRequest('/api/users/me/password', {
+    method: 'PUT',
+    token: accessToken,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  })
+}

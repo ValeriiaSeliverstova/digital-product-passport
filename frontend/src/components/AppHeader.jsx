@@ -4,6 +4,7 @@ const navigationItems = [
   { id: 'templates', label: 'Templates' },
   { id: 'product-models', label: 'Product models' },
   { id: 'product-items', label: 'Product items' },
+  { id: 'profile', label: 'Profile' },
 ]
 
 function AppHeader({ currentSection, currentUser, onLogout, onNavigate }) {

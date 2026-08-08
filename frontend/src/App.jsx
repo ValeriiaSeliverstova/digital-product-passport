@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import CreateTemplatePage from './pages/CreateTemplatePage.jsx'
 import EditTemplatePage from './pages/EditTemplatePage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
 import ProductItemFormPage from './pages/ProductItemFormPage.jsx'
 import ProductItemListPage from './pages/ProductItemListPage.jsx'
 import ProductModelFormPage from './pages/ProductModelFormPage.jsx'
@@ -72,6 +73,17 @@ function App() {
 
   if (!accessToken || !currentUser) {
     return <LoginPage onLogin={handleLogin} />
+  }
+
+  if (currentPage === 'profile') {
+    return (
+      <ProfilePage
+        accessToken={accessToken}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onNavigate={handleNavigate}
+      />
+    )
   }
 
   if (currentPage === 'create-template') {
