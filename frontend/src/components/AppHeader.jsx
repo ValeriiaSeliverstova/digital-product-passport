@@ -8,12 +8,14 @@ function AppHeader({ currentUser, onLogout }) {
           DPP
         </span>
         <span>Digital Product Passport</span>
-      </div>
+        </div>
 
-      <div className={styles.account}>
-        <span className={styles.email}>{currentUser.email}</span>
-        <button className={styles.logoutButton} type="button" onClick={onLogout}>
-          Logout
+        <div className={styles.account}>
+          <span className={styles.accountName}>
+            {currentUser.organization?.name || currentUser.email}
+          </span>
+          <button className={styles.logoutButton} type="button" onClick={onLogout}>
+            Logout
         </button>
       </div>
     </header>
