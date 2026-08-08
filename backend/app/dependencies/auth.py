@@ -49,7 +49,7 @@ def get_current_user(
 
     statement = (
         select(User)
-        .options(joinedload(User.role))
+        .options(joinedload(User.role), joinedload(User.organization))
         .where(User.id == user_id)
     )
     user = db.scalar(statement)

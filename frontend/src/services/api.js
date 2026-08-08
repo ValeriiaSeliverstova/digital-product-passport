@@ -13,7 +13,7 @@ export class ApiError extends Error {
 
 /** Send one request and convert unsuccessful responses into a consistent error. */
 export async function apiRequest(path, options = {}) {
-  const { token, headers, ...requestOptions } = options
+  const { token, headers, responseType = 'json', ...requestOptions } = options
   const requestHeaders = {
     Accept: 'application/json',
     ...headers,
@@ -45,6 +45,10 @@ export async function apiRequest(path, options = {}) {
 
   if (response.status === 204) {
     return null
+  }
+
+  if (responseType === 'blob') {
+    return response.blob()
   }
 
   return response.json()

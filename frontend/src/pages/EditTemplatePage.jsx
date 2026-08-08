@@ -60,6 +60,7 @@ function EditTemplatePage({
   templateId,
   onBack,
   onLogout,
+  onNavigate,
   onSelectVersion,
 }) {
   const [template, setTemplate] = useState(null)
@@ -307,7 +308,12 @@ function EditTemplatePage({
 
   return (
     <div className={styles.page}>
-      <AppHeader currentUser={currentUser} onLogout={onLogout} />
+      <AppHeader
+        currentSection="templates"
+        currentUser={currentUser}
+        onLogout={onLogout}
+        onNavigate={onNavigate}
+      />
 
       <main className={styles.main}>
         <button className={styles.backButton} type="button" onClick={onBack}>
