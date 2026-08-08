@@ -1,21 +1,43 @@
 import styles from './AppHeader.module.css'
 
-function AppHeader({ currentUser, onLogout }) {
+const navigationItems = [
+  { id: 'templates', label: 'Templates' },
+  { id: 'product-models', label: 'Product models' },
+  { id: 'product-items', label: 'Product items' },
+]
+
+function AppHeader({ currentSection, currentUser, onLogout, onNavigate }) {
   return (
     <header className={styles.header}>
-      <div className={styles.brand}>
-        <span className={styles.brandMark} aria-hidden="true">
-          DPP
-        </span>
-        <span>Digital Product Passport</span>
+      <div className={styles.topRow}>
+        <div className={styles.brand}>
+          <span className={styles.brandMark} aria-hidden="true">
+            DPP
+          </span>
+          <span>Digital Product Passport</span>
+        </div>
+
+        <div className={styles.account}>
+          <span className={styles.email}>{currentUser.email}</span>
+          <button className={styles.logoutButton} type="button" onClick={onLogout}>
+            Logout
+          </button>
+        </div>
       </div>
 
-      <div className={styles.account}>
-        <span className={styles.email}>{currentUser.email}</span>
-        <button className={styles.logoutButton} type="button" onClick={onLogout}>
-          Logout
-        </button>
-      </div>
+      <nav className={styles.navigation} aria-label="Manufacturer navigation">
+        {navigationItems.map((item) => (
+          <button
+            className={styles.navigationButton}
+            type="button"
+            aria-current={currentSection === item.id ? 'page' : undefined}
+            key={item.id}
+            onClick={() => onNavigate(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
     </header>
   )
 }

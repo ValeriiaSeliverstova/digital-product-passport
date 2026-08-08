@@ -4,6 +4,8 @@ const statusLabels = {
   draft: 'Draft',
   active: 'Active',
   archived: 'Archived',
+  published: 'Published',
+  retired: 'Retired',
 }
 
 function StatusBadge({ status }) {

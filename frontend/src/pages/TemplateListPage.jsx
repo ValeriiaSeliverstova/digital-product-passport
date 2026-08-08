@@ -37,6 +37,7 @@ function TemplateListPage({
   onCreateTemplate,
   onEditTemplate,
   onLogout,
+  onNavigate,
 }) {
   const [templates, setTemplates] = useState([])
   const [categories, setCategories] = useState([])
@@ -84,7 +85,12 @@ function TemplateListPage({
 
   return (
     <div className={styles.page}>
-      <AppHeader currentUser={currentUser} onLogout={onLogout} />
+      <AppHeader
+        currentSection="templates"
+        currentUser={currentUser}
+        onLogout={onLogout}
+        onNavigate={onNavigate}
+      />
 
       <main className={styles.main}>
         <div className={styles.pageHeading}>

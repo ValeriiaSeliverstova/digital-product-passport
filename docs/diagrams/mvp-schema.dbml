@@ -62,11 +62,14 @@ Table product_models {
   template_id uuid [ref: > passport_templates.id]
   model_code varchar
   name varchar
+  description text
   status varchar
+  created_at timestamp
 }
 
 Table product_items {
   id uuid [pk]
+  organization_id uuid [ref: > organizations.id]
   model_id uuid [ref: > product_models.id]
   serial_number varchar
   public_id uuid [unique]
@@ -74,6 +77,7 @@ Table product_items {
   status varchar
   passport_data jsonb
   created_at timestamp
+  updated_at timestamp
 }
 
 Table lifecycle_events {

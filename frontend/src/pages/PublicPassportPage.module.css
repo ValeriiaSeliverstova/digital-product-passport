@@ -1,0 +1,225 @@
+.page {
+  min-height: 100vh;
+}
+
+.skipLink {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 1;
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border-radius: var(--radius-control);
+  transform: translateY(-200%);
+}
+
+.skipLink:focus {
+  transform: translateY(0);
+}
+
+.header {
+  min-height: 4.5rem;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.brand {
+  display: flex;
+  max-width: var(--content-max-width);
+  min-height: 3rem;
+  margin-inline: auto;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: var(--font-weight-bold);
+}
+
+.brandMark {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border-radius: 50%;
+  font-size: var(--font-size-small);
+}
+
+.main {
+  display: grid;
+  width: 100%;
+  max-width: 60rem;
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4) var(--space-12);
+  gap: var(--space-6);
+}
+
+.identityCard,
+.detailsCard,
+.stateCard {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-dialog);
+}
+
+.status {
+  display: inline-flex;
+  margin-block-end: var(--space-4);
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border-radius: 999px;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+.category {
+  margin-block-end: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+.description {
+  max-width: 42rem;
+  color: var(--color-text-muted);
+}
+
+.summary {
+  display: grid;
+  margin: var(--space-6) 0 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.summary div,
+.field {
+  display: grid;
+  padding-block: var(--space-3);
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.summary dt,
+.field dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+.summary dd,
+.field dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.code,
+.publicId span {
+  font-family: var(--font-mono);
+}
+
+.sectionHeading {
+  display: flex;
+  flex-direction: column;
+  margin-block-end: var(--space-4);
+  gap: var(--space-2);
+}
+
+.sectionHeading h2 {
+  margin-block-end: var(--space-1);
+}
+
+.sectionHeading p,
+.emptyFields {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.templateVersion {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.fieldList {
+  display: grid;
+  margin: 0;
+}
+
+.publicId {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  overflow-wrap: anywhere;
+}
+
+.stateCard {
+  max-width: var(--form-max-width);
+  margin-inline: auto;
+}
+
+.retryButton {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.retryButton:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.footer {
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  text-align: center;
+}
+
+@media (min-width: 600px) {
+  .header {
+    padding-inline: var(--space-6);
+  }
+
+  .main {
+    padding: var(--space-8) var(--space-6) var(--space-12);
+  }
+
+  .identityCard,
+  .detailsCard,
+  .stateCard {
+    padding: var(--space-6);
+  }
+
+  .summary,
+  .fieldList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-6);
+  }
+
+  .sectionHeading {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .templateVersion {
+    text-align: right;
+  }
+}
+
+@media (min-width: 900px) {
+  .header {
+    padding-inline: var(--space-8);
+  }
+
+  .main {
+    padding-inline: var(--space-8);
+  }
+}

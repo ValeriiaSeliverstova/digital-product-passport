@@ -14,12 +14,14 @@
   background: var(--color-warning-bg);
 }
 
-.active {
+.active,
+.published {
   color: var(--color-success);
   background: var(--color-success-bg);
 }
 
-.archived {
+.archived,
+.retired {
   color: var(--color-archived);
   background: var(--color-archived-bg);
 }

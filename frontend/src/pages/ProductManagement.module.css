@@ -1,0 +1,330 @@
+.page {
+  min-height: 100vh;
+}
+
+.main {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4) var(--space-12);
+}
+
+.pageHeading,
+.cardHeading,
+.sectionHeading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.pageHeading {
+  margin-block-end: var(--space-6);
+}
+
+.pageHeading h1,
+.pageHeading p,
+.cardHeading h2,
+.sectionHeading h2,
+.sectionHeading p {
+  margin: 0;
+}
+
+.pageHeading p,
+.sectionHeading p,
+.helperText,
+.emptyText {
+  color: var(--color-text-muted);
+}
+
+.backButton,
+.textButton {
+  min-height: 2.75rem;
+  padding: var(--space-2) 0;
+  color: var(--color-primary);
+  background: transparent;
+  border: 0;
+  font-weight: var(--font-weight-semibold);
+}
+
+.backButton {
+  margin-block-end: var(--space-4);
+}
+
+.primaryButton,
+.secondaryButton,
+.dangerButton {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.primaryButton {
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.secondaryButton {
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary);
+}
+
+.dangerButton {
+  color: var(--color-error);
+  background: var(--color-surface);
+  border: 1px solid var(--color-error);
+}
+
+.notice,
+.error {
+  margin-block: 0 var(--space-6);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+}
+
+.notice {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.cardGrid,
+.form,
+.fieldGrid,
+.metadata,
+.passportFields {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card,
+.formCard,
+.stateCard,
+.sectionCard {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.formCard,
+.stateCard {
+  max-width: var(--form-max-width);
+}
+
+.sectionCard {
+  margin-block-end: var(--space-6);
+}
+
+.cardHeading {
+  margin-block-end: var(--space-4);
+}
+
+.card > .secondaryButton {
+  margin-block-start: var(--space-4);
+}
+
+.metadata {
+  margin: 0;
+  padding-block-start: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.metadata div {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.metadata dt,
+.readonlyLabel {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+.metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.code {
+  font-family: var(--font-mono);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.helperText,
+.emptyText {
+  margin: 0;
+  font-size: var(--font-size-small);
+}
+
+.readonlyValue {
+  min-height: 2.75rem;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-3);
+  padding-block-start: var(--space-2);
+}
+
+.sectionHeading {
+  margin-block-end: var(--space-4);
+}
+
+.passportField {
+  display: grid;
+  gap: var(--space-1);
+  padding-block-end: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.fieldFlags {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.publicLink {
+  overflow-wrap: anywhere;
+}
+
+.qrPreview {
+  display: grid;
+  max-width: 36rem;
+  padding: var(--space-4);
+  align-items: center;
+  gap: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.qrPreview h3,
+.qrPreview p {
+  margin-block-end: var(--space-1);
+}
+
+.qrImage {
+  width: 12rem;
+  margin-inline: auto;
+}
+
+.qrUrl {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  overflow-wrap: anywhere;
+}
+
+.qrActions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+@media (min-width: 600px) {
+  .main {
+    padding: var(--space-8) var(--space-6) var(--space-12);
+  }
+
+  .pageHeading,
+  .cardHeading,
+  .sectionHeading {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .qrPreview {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .card,
+  .formCard,
+  .stateCard,
+  .sectionCard {
+    padding: var(--space-6);
+  }
+
+  .fieldGrid,
+  .passportFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .dangerButton {
+    width: auto;
+  }
+}
+
+@media (min-width: 900px) {
+  .main {
+    padding-inline: var(--space-8);
+  }
+
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+}
+
+@media print {
+  .page > header,
+  .main > * {
+    display: none;
+  }
+
+  .main {
+    max-width: none;
+    padding: 0;
+  }
+
+  .main > .qrCard {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .qrCard .sectionHeading,
+  .qrActions,
+  .qrExplanation {
+    display: none;
+  }
+
+  .qrPreview {
+    margin: 0;
+    border: 0;
+  }
+}

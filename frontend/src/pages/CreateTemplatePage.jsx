@@ -11,6 +11,7 @@ function CreateTemplatePage({
   onCancel,
   onCreated,
   onLogout,
+  onNavigate,
 }) {
   const [name, setName] = useState('')
   const [categoryId, setCategoryId] = useState('')
@@ -84,7 +85,12 @@ function CreateTemplatePage({
 
   return (
     <div className={styles.page}>
-      <AppHeader currentUser={currentUser} onLogout={onLogout} />
+      <AppHeader
+        currentSection="templates"
+        currentUser={currentUser}
+        onLogout={onLogout}
+        onNavigate={onNavigate}
+      />
 
       <main className={styles.main}>
         <button className={styles.backButton} type="button" onClick={onCancel}>

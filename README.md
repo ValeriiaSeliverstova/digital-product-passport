@@ -19,7 +19,7 @@ Safe equipment is used as the primary case study.
 - configurable passport templates;
 - versioned template families with immutable Active field definitions;
 - product models, batches, and individual items;
-- QR code and NFC-based access;
+- printable QR-code access and planned NFC support;
 - document and certificate management;
 - lifecycle and maintenance history;
 - role-based access control;
@@ -28,8 +28,10 @@ Safe equipment is used as the primary case study.
 ## Project Status
 
 The MVP backend includes authentication, product categories, configurable and
-versioned passport templates, and template-field management. The React frontend
-currently supports login and the manufacturer template workflow.
+versioned passport templates, product models, physical product items, and a
+public passport API. The React frontend supports the manufacturer workflows for
+templates, product models, and product items, together with the public passport
+page and repeatable SVG QR-code generation for printed labels.
 
 ## Security
 

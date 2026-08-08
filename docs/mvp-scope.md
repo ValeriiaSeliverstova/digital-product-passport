@@ -147,13 +147,25 @@ Example:
 
 ```text
 Model: SecureSafe 500
+Description: Compact safe designed for homes and small offices
 Category: Safes
 Template: Electronic Safe Passport
 ```
 
+The optional description contains general information shared by every physical
+item of the product model.
+
+A product model uses one exact Active template version. Its `model_code` is
+unique within the manufacturer organization, and its status is either `active`
+or `archived`.
+
 ### ProductItem
 
 Represents a specific physical product with its own serial number and Digital Product Passport.
+
+Items begin as Draft so incomplete data can be saved. Publishing requires all
+required template fields. Published items cannot change their identity or
+passport values; they may only move to Retired.
 
 ### LifecycleEvent
 
@@ -295,15 +307,31 @@ DELETE /api/templates/{template_id}/fields/{field_id}
 POST /api/product-models
 GET  /api/product-models
 GET  /api/product-models/{id}
+PUT  /api/product-models/{id}
 ```
+
+Only the name, optional description, and status can be updated. Organization,
+category, template version, and model code remain fixed after creation.
 
 ### Product items
 
 ```text
 POST /api/product-items
+GET  /api/product-items
 GET  /api/product-items/{id}
+PUT  /api/product-items/{id}
+GET  /api/product-items/{id}/qr-code
 GET  /api/passports/{public_id}
 ```
+
+The manufacturer endpoints require authentication and return only items owned
+by the user's organization. The public passport endpoint requires no login and
+returns only Published products and fields marked for public access. Draft,
+Retired, and unknown passports return the same Not Found response.
+
+The protected QR endpoint generates a fresh printable SVG for an owned
+Published item whenever requested. The image is not stored in the database and
+contains only the frontend public-passport URL.
 
 ## Initial Seed Data
 
