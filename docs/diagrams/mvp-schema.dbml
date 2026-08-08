@@ -2,6 +2,13 @@ Table organizations {
   id uuid [pk]
   name varchar
   country varchar
+  address_line_1 varchar
+  address_line_2 varchar
+  city varchar
+  postal_code varchar
+  contact_email varchar
+  phone varchar
+  website varchar
   created_at timestamp
 }
 

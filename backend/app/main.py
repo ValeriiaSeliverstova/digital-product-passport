@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers.auth import router as auth_router
 from app.routers.categories import router as categories_router
+from app.routers.organizations import router as organizations_router
 from app.routers.passports import router as passports_router
 from app.routers.product_items import router as product_items_router
 from app.routers.product_models import router as product_models_router
@@ -23,6 +24,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(categories_router)
+app.include_router(organizations_router)
 app.include_router(passports_router)
 app.include_router(product_items_router)
 app.include_router(product_models_router)

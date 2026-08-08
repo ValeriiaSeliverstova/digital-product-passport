@@ -66,6 +66,14 @@ function App() {
     setNotice('')
   }
 
+  function handleOrganizationUpdated(organization) {
+    setCurrentUser((user) => ({
+      ...user,
+      organization_id: organization.id,
+      organization,
+    }))
+  }
+
   // Public QR links bypass the manufacturer sign-in screen.
   if (publicPassportId) {
     return <PublicPassportPage publicId={publicPassportId} />
@@ -82,6 +90,7 @@ function App() {
         currentUser={currentUser}
         onLogout={handleLogout}
         onNavigate={handleNavigate}
+        onOrganizationUpdated={handleOrganizationUpdated}
       />
     )
   }

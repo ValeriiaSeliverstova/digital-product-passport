@@ -89,6 +89,14 @@ def test_current_user_response_includes_organization_name(
     assert response.json()["organization"] == {
         "id": str(organization.id),
         "name": "Example Safety Institute",
+        "country": None,
+        "address_line_1": None,
+        "address_line_2": None,
+        "city": None,
+        "postal_code": None,
+        "contact_email": None,
+        "phone": None,
+        "website": None,
     }
 
 

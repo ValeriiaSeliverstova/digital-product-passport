@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
+from app.schemas.organization import OrganizationResponse
+
 
 MIN_PASSWORD_LENGTH = 12
 MAX_PASSWORD_LENGTH = 128
@@ -20,15 +22,6 @@ class PasswordChangeRequest(BaseModel):
 
 class RoleResponse(BaseModel):
     """Role information safe to expose through the API."""
-
-    id: UUID
-    name: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class OrganizationResponse(BaseModel):
-    """Organization details safe to show to an authenticated member."""
 
     id: UUID
     name: str

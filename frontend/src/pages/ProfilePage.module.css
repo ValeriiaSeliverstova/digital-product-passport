@@ -58,6 +58,21 @@
   overflow-wrap: anywhere;
 }
 
+.organizationForm {
+  display: grid;
+  gap: var(--space-4);
+  padding-block-start: var(--space-4);
+}
+
+.formMessage {
+  margin: 0;
+}
+
+.unassignedOrganization {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-muted);
+}
+
 .sectionHeading {
   display: grid;
   gap: var(--space-1);
@@ -128,6 +143,16 @@
   .details div {
     grid-template-columns: 9rem minmax(0, 1fr);
     gap: var(--space-4);
+  }
+
+  .organizationForm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fullWidthField,
+  .formMessage,
+  .organizationSubmit {
+    grid-column: 1 / -1;
   }
 
   .submitButton {
