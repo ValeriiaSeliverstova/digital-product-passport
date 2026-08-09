@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 
 import AppHeader from '../components/AppHeader.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
@@ -629,95 +629,109 @@ function EditTemplatePage({
                 </div>
               )}
 
-              <div className={styles.fieldList}>
-                {template.fields.map((field) => (
-                  <article className={styles.fieldCard} key={field.id}>
-                    <div className={styles.fieldHeading}>
-                      <div>
-                        <h3>{field.label}</h3>
-                        <code>{field.code}</code>
-                      </div>
-                      {template.status === 'draft' && (
-                        <div className={styles.fieldActions}>
-                          <button
-                            className={styles.textButton}
-                            type="button"
-                            onClick={() => {
-                              setError('')
-                              setNotice('')
-                              setDeletingFieldId(null)
-                              setFieldFormMode(field.id)
-                            }}
-                            disabled={fieldFormMode !== null}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className={styles.deleteButton}
-                            type="button"
-                            onClick={() => setDeletingFieldId(field.id)}
-                            disabled={fieldFormMode !== null}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <dl className={styles.fieldMetadata}>
-                      <div>
-                        <dt>Type</dt>
-                        <dd>{typeLabels[field.data_type]}</dd>
-                      </div>
-                      <div>
-                        <dt>Access</dt>
-                        <dd>
-                          {field.access_level === 'public'
-                            ? 'Public'
-                            : 'Manufacturer only'}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Required</dt>
-                        <dd>{field.is_required ? 'Yes' : 'No'}</dd>
-                      </div>
-                      <div>
-                        <dt>Order</dt>
-                        <dd>{field.display_order}</dd>
-                      </div>
-                    </dl>
-                    <p className={styles.rulesSummary}>
-                      {validationSummary(field)}
-                    </p>
-
-                    {deletingFieldId === field.id && (
-                      <div className={styles.deleteConfirmation} role="alert">
-                        <p>
-                          Delete “{field.label}”? This action cannot be undone.
-                        </p>
-                        <div>
-                          <button
-                            className={styles.textButton}
-                            type="button"
-                            onClick={() => setDeletingFieldId(null)}
-                            disabled={isDeletingField}
-                          >
-                            Keep field
-                          </button>
-                          <button
-                            className={styles.confirmDeleteButton}
-                            type="button"
-                            onClick={() => handleFieldDelete(field.id)}
-                            disabled={isDeletingField}
-                          >
-                            {isDeletingField ? 'Deleting…' : 'Delete field'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </article>
-                ))}
-              </div>
+              {template.fields.length > 0 && (
+                <div className={styles.fieldTableWrapper}>
+                  <table className={styles.fieldTable}>
+                    <thead>
+                      <tr>
+                        <th scope="col">Order</th>
+                        <th scope="col">Label</th>
+                        <th scope="col">Code</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Required</th>
+                        <th scope="col">Access</th>
+                        <th scope="col">Validation</th>
+                        {template.status === 'draft' && (
+                          <th scope="col">Actions</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {template.fields.map((field) => (
+                        <Fragment key={field.id}>
+                          <tr>
+                            <td>{field.display_order}</td>
+                            <td className={styles.fieldLabel}>{field.label}</td>
+                            <td><code>{field.code}</code></td>
+                            <td>{typeLabels[field.data_type]}</td>
+                            <td>{field.is_required ? 'Yes' : 'No'}</td>
+                            <td>
+                              {field.access_level === 'public'
+                                ? 'Public'
+                                : 'Manufacturer only'}
+                            </td>
+                            <td className={styles.validationCell}>
+                              {validationSummary(field)}
+                            </td>
+                            {template.status === 'draft' && (
+                              <td>
+                                <div className={styles.tableActions}>
+                                  <button
+                                    className={styles.textButton}
+                                    type="button"
+                                    onClick={() => {
+                                      setError('')
+                                      setNotice('')
+                                      setDeletingFieldId(null)
+                                      setFieldFormMode(field.id)
+                                    }}
+                                    disabled={fieldFormMode !== null}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className={styles.deleteButton}
+                                    type="button"
+                                    onClick={() => setDeletingFieldId(field.id)}
+                                    disabled={fieldFormMode !== null}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            )}
+                          </tr>
+                          {deletingFieldId === field.id && (
+                            <tr className={styles.confirmationRow}>
+                              <td colSpan={template.status === 'draft' ? 8 : 7}>
+                                <div
+                                  className={styles.deleteConfirmation}
+                                  role="alert"
+                                >
+                                  <p>
+                                    Delete “{field.label}”? This action cannot
+                                    be undone.
+                                  </p>
+                                  <div>
+                                    <button
+                                      className={styles.textButton}
+                                      type="button"
+                                      onClick={() => setDeletingFieldId(null)}
+                                      disabled={isDeletingField}
+                                    >
+                                      Keep field
+                                    </button>
+                                    <button
+                                      className={styles.confirmDeleteButton}
+                                      type="button"
+                                      onClick={() => handleFieldDelete(field.id)}
+                                      disabled={isDeletingField}
+                                    >
+                                      {isDeletingField
+                                        ? 'Deleting…'
+                                        : 'Delete field'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           </>
         )}

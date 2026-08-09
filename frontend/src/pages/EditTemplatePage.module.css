@@ -49,16 +49,13 @@
 .heading p,
 .sectionHeading h2,
 .sectionHeading p,
-.fieldHeading h3,
 .readonlyMessage,
-.rulesSummary,
 .deleteConfirmation p {
   margin: 0;
 }
 
 .heading p,
 .sectionHeading p,
-.rulesSummary,
 .readonlyMessage {
   color: var(--color-text-muted);
 }
@@ -144,7 +141,6 @@
 
 .card,
 .fieldFormCard,
-.fieldCard,
 .emptyState,
 .stateCard {
   padding: var(--space-4);
@@ -216,49 +212,66 @@
   margin-block: 0 var(--space-4);
 }
 
-.fieldList {
-  display: grid;
-  gap: var(--space-4);
+.fieldTableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
 }
 
-.fieldHeading {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  margin-block-end: var(--space-4);
+.fieldTable {
+  width: 100%;
+  min-width: 68rem;
+  border-collapse: collapse;
+  text-align: left;
 }
 
-.fieldHeading code {
+.fieldTable th,
+.fieldTable td {
+  padding: var(--space-3);
+  vertical-align: middle;
+}
+
+.fieldTable th {
   color: var(--color-text-muted);
-}
-
-.fieldActions {
-  display: flex;
-  gap: var(--space-4);
-}
-
-.fieldMetadata {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
-  margin: 0;
-  padding-block: var(--space-4);
-  border-block: 1px solid var(--color-border);
-}
-
-.fieldMetadata dt {
-  color: var(--color-text-muted);
+  background: var(--color-page);
   font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.fieldTable tbody tr:not(.confirmationRow) {
+  border-top: 1px solid var(--color-border);
+}
+
+.fieldTable code {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.fieldLabel {
   font-weight: var(--font-weight-semibold);
 }
 
-.fieldMetadata dd {
-  margin: 0;
+.validationCell {
+  min-width: 15rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
 }
 
-.rulesSummary {
-  padding-block-start: var(--space-4);
-  font-size: var(--font-size-small);
+.tableActions {
+  display: flex;
+  gap: var(--space-3);
+  white-space: nowrap;
+}
+
+.confirmationRow td {
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.confirmationRow .deleteConfirmation {
+  margin-block-start: 0;
 }
 
 .emptyState {
@@ -297,14 +310,12 @@
 
   .card,
   .fieldFormCard,
-  .fieldCard,
   .emptyState,
   .stateCard {
     padding: var(--space-6);
   }
 
   .sectionHeading,
-  .fieldHeading,
   .nameForm {
     flex-direction: row;
     align-items: flex-end;
@@ -320,11 +331,6 @@
   .confirmDeleteButton,
   .archiveButton {
     width: auto;
-  }
-
-  .fieldHeading {
-    display: flex;
-    align-items: flex-start;
   }
 
   .deleteConfirmation > div {
@@ -351,8 +357,4 @@
     padding-inline: var(--space-8);
   }
 
-  .fieldList {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-6);
-  }
 }
