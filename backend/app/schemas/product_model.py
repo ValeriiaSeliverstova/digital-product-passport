@@ -53,3 +53,21 @@ class ProductModelResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProductModelListItem(ProductModelResponse):
+    """Product model data and readable labels used by the card list."""
+
+    category_name: str
+    template_name: str
+    template_version: int
+
+
+class ProductModelPage(BaseModel):
+    """One filtered page of manufacturer-owned product models."""
+
+    items: list[ProductModelListItem]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

@@ -3,9 +3,18 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from cloudinary.exceptions import Error as CloudinaryError
-from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -20,7 +29,10 @@ from app.image_storage import (
 from app.models import PassportTemplate, ProductCategory, ProductModel, User
 from app.schemas.product_model import (
     ProductModelCreate,
+    ProductModelListItem,
+    ProductModelPage,
     ProductModelResponse,
+    ProductModelStatus,
     ProductModelUpdate,
 )
 
@@ -100,6 +112,70 @@ def list_product_models(
         .order_by(ProductModel.created_at.desc(), ProductModel.name)
     )
     return list(db.scalars(statement).all())
+
+
+@router.get("/page", response_model=ProductModelPage)
+def list_product_model_page(
+    db: DatabaseSession,
+    current_user: Manufacturer,
+    search: Annotated[str | None, Query(min_length=1, max_length=255)] = None,
+    category_id: UUID | None = None,
+    model_status: ProductModelStatus | None = Query(default=None, alias="status"),
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> ProductModelPage:
+    """Filter and paginate product-model cards for the current manufacturer."""
+
+    filters = [ProductModel.organization_id == current_user.organization_id]
+    if search is not None:
+        value = search.strip().lower()
+        filters.append(
+            or_(
+                func.lower(ProductModel.name).contains(value, autoescape=True),
+                func.lower(ProductModel.model_code).contains(
+                    value,
+                    autoescape=True,
+                ),
+            ),
+        )
+    if category_id is not None:
+        filters.append(ProductModel.category_id == category_id)
+    if model_status is not None:
+        filters.append(ProductModel.status == model_status)
+
+    total = db.scalar(
+        select(func.count(ProductModel.id)).where(*filters),
+    ) or 0
+    rows = db.execute(
+        select(
+            ProductModel,
+            ProductCategory.name.label("category_name"),
+            PassportTemplate.name.label("template_name"),
+            PassportTemplate.version.label("template_version"),
+        )
+        .join(ProductCategory, ProductModel.category_id == ProductCategory.id)
+        .join(PassportTemplate, ProductModel.template_id == PassportTemplate.id)
+        .where(*filters)
+        .order_by(ProductModel.created_at.desc(), ProductModel.name)
+        .offset((page - 1) * page_size)
+        .limit(page_size),
+    ).all()
+
+    return ProductModelPage(
+        items=[
+            ProductModelListItem(
+                **ProductModelResponse.model_validate(model).model_dump(),
+                category_name=category_name,
+                template_name=template_name,
+                template_version=template_version,
+            )
+            for model, category_name, template_name, template_version in rows
+        ],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
 
 
 @router.get("/{model_id}", response_model=ProductModelResponse)

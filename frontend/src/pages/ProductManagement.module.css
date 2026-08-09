@@ -617,6 +617,13 @@
       auto;
   }
 
+  .modelListFilters {
+    grid-template-columns:
+      minmax(18rem, 1.5fr)
+      repeat(2, minmax(10rem, 1fr))
+      auto;
+  }
+
   .listSearchField {
     grid-column: auto;
   }

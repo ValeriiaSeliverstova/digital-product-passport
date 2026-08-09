@@ -5,6 +5,19 @@ export function getProductModels(accessToken) {
   return apiRequest('/api/product-models', { token: accessToken })
 }
 
+/** Load one filtered page of product-model cards. */
+export function getProductModelPage(accessToken, filters) {
+  const query = new URLSearchParams({
+    page: String(filters.page),
+    page_size: String(filters.pageSize),
+  })
+  if (filters.search) query.set('search', filters.search)
+  if (filters.categoryId) query.set('category_id', filters.categoryId)
+  if (filters.status) query.set('status', filters.status)
+
+  return apiRequest(`/api/product-models/page?${query}`, { token: accessToken })
+}
+
 /** Load one owned product model. */
 export function getProductModel(accessToken, modelId) {
   return apiRequest(`/api/product-models/${modelId}`, { token: accessToken })

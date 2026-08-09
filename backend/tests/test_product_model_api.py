@@ -323,6 +323,92 @@ def test_product_model_queries_hide_other_organizations(
     assert other_response.status_code == 404
 
 
+def test_product_model_page_supports_search_filters_and_pagination(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    user, headers = create_manufacturer(db_session, "Manufacturer A")
+    other_user, _ = create_manufacturer(db_session, "Manufacturer B")
+    safes = create_category(db_session)
+    cabinets = create_category(db_session)
+    safes_template = create_template(db_session, user, safes)
+    cabinets_template = create_template(db_session, user, cabinets)
+    other_template = create_template(db_session, other_user, safes)
+    models = [
+        ProductModel(
+            organization_id=user.organization_id,
+            category_id=safes.id,
+            template_id=safes_template.id,
+            model_code="HERITAGE-1920",
+            name="Heritage Safe",
+            status="active",
+        ),
+        ProductModel(
+            organization_id=user.organization_id,
+            category_id=safes.id,
+            template_id=safes_template.id,
+            model_code="MODERN-40",
+            name="Modern Safe",
+            status="archived",
+        ),
+        ProductModel(
+            organization_id=user.organization_id,
+            category_id=cabinets.id,
+            template_id=cabinets_template.id,
+            model_code="CABINET-10",
+            name="Document Cabinet",
+            status="active",
+        ),
+        ProductModel(
+            organization_id=other_user.organization_id,
+            category_id=safes.id,
+            template_id=other_template.id,
+            model_code="OTHER-40",
+            name="Other Organization Model",
+        ),
+    ]
+    db_session.add_all(models)
+    db_session.commit()
+
+    first_page = client.get(
+        "/api/product-models/page?page=1&page_size=2",
+        headers=headers,
+    )
+    assert first_page.status_code == 200, first_page.text
+    assert first_page.json()["total"] == 3
+    assert first_page.json()["total_pages"] == 2
+    assert len(first_page.json()["items"]) == 2
+    assert first_page.json()["items"][0]["category_name"] == "Test Safes"
+    assert first_page.json()["items"][0]["template_name"].startswith(
+        "Test Passport",
+    )
+
+    name_search = client.get(
+        "/api/product-models/page?search=heritage",
+        headers=headers,
+    )
+    assert [item["model_code"] for item in name_search.json()["items"]] == [
+        "HERITAGE-1920",
+    ]
+
+    code_search = client.get(
+        "/api/product-models/page?search=modern",
+        headers=headers,
+    )
+    assert [item["model_code"] for item in code_search.json()["items"]] == [
+        "MODERN-40",
+    ]
+
+    filtered = client.get(
+        f"/api/product-models/page?category_id={safes.id}&status=archived",
+        headers=headers,
+    )
+    assert filtered.status_code == 200, filtered.text
+    assert [item["model_code"] for item in filtered.json()["items"]] == [
+        "MODERN-40",
+    ]
+
+
 def test_product_model_can_update_and_clear_editable_fields(
     client: TestClient,
     db_session: Session,
