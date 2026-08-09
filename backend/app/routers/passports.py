@@ -77,6 +77,9 @@ def get_public_passport(
     return PublicPassportResponse(
         public_id=product_item.public_id,
         manufacturer_name=product_item.organization.name,
+        support_email=product_item.organization.contact_email,
+        support_phone=product_item.organization.phone,
+        support_website=product_item.organization.website,
         category_name=product_model.category.name,
         model_code=product_model.model_code,
         model_name=product_model.name,

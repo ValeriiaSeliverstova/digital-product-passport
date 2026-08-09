@@ -52,6 +52,15 @@ function formatEventType(value) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
+function supportEmailUrl(passport) {
+  const subject = `Support request: ${passport.model_name} ${passport.serial_number}`
+  return `mailto:${passport.support_email}?subject=${encodeURIComponent(subject)}`
+}
+
+function supportPhoneUrl(phone) {
+  return `tel:${phone.replace(/[^+\d]/g, '')}`
+}
+
 function PublicPassportPage({ publicId }) {
   const [passport, setPassport] = useState(null)
   const [loadState, setLoadState] = useState('loading')
@@ -228,6 +237,53 @@ function PublicPassportPage({ publicId }) {
                 </p>
               )}
             </section>
+
+            {(passport.support_email ||
+              passport.support_phone ||
+              passport.support_website) && (
+              <section className={styles.detailsCard}>
+                <div className={styles.sectionHeading}>
+                  <div>
+                    <h2>Contact support</h2>
+                    <p>
+                      Contact {passport.manufacturer_name} for product support
+                      or service assistance.
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.supportLinks}>
+                  {passport.support_email && (
+                    <a
+                      className={styles.supportLink}
+                      href={supportEmailUrl(passport)}
+                    >
+                      Email support
+                      <span>{passport.support_email}</span>
+                    </a>
+                  )}
+                  {passport.support_phone && (
+                    <a
+                      className={styles.supportLink}
+                      href={supportPhoneUrl(passport.support_phone)}
+                    >
+                      Call support
+                      <span>{passport.support_phone}</span>
+                    </a>
+                  )}
+                  {passport.support_website && (
+                    <a
+                      className={styles.supportLink}
+                      href={passport.support_website}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Support website
+                      <span>{passport.support_website}</span>
+                    </a>
+                  )}
+                </div>
+              </section>
+            )}
 
             <p className={styles.publicId}>
               Public passport ID: <span>{passport.public_id}</span>

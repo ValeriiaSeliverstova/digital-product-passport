@@ -182,6 +182,36 @@
   margin-block-start: var(--space-2);
 }
 
+.supportLinks {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.supportLink {
+  display: grid;
+  min-height: 4.5rem;
+  padding: var(--space-3) var(--space-4);
+  align-content: center;
+  gap: var(--space-1);
+  color: var(--color-primary);
+  background: var(--color-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.supportLink:hover {
+  border-color: var(--color-primary);
+}
+
+.supportLink span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-normal);
+}
+
 .publicId {
   margin: 0;
   color: var(--color-text-muted);
@@ -235,6 +265,10 @@
   .fieldList {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: var(--space-6);
+  }
+
+  .supportLinks {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .sectionHeading {

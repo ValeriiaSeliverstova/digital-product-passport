@@ -24,7 +24,12 @@ def create_passport(
 ) -> ProductItem:
     """Create a product passport with both public and private fields."""
 
-    organization = Organization(name="Example Safe Manufacturer")
+    organization = Organization(
+        name="Example Safe Manufacturer",
+        contact_email="support@example.com",
+        phone="+380 00 000 00 00",
+        website="https://example.com/support",
+    )
     category = ProductCategory(
         code=f"SAFES_{uuid4().hex}",
         name="Safes",
@@ -108,6 +113,9 @@ def test_published_passport_is_public_without_authentication(
     result = response.json()
     assert result["public_id"] == str(product_item.public_id)
     assert result["manufacturer_name"] == "Example Safe Manufacturer"
+    assert result["support_email"] == "support@example.com"
+    assert result["support_phone"] == "+380 00 000 00 00"
+    assert result["support_website"] == "https://example.com/support"
     assert result["category_name"] == "Safes"
     assert result["model_code"] == "EDS-40"
     assert result["model_name"] == "EveryDaySafe 40"
