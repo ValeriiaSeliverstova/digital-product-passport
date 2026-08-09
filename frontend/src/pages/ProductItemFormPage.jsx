@@ -151,6 +151,7 @@ function ProductItemFormPage({
   const [eventProvider, setEventProvider] = useState('')
   const [eventAccessLevel, setEventAccessLevel] = useState('public')
   const [isSavingEvent, setIsSavingEvent] = useState(false)
+  const [isRetirementConfirmationOpen, setIsRetirementConfirmationOpen] = useState(false)
 
   useEffect(() => {
     let isCurrentRequest = true
@@ -293,11 +294,13 @@ function ProductItemFormPage({
   async function retireItem() {
     setIsSaving(true)
     setError('')
+    setNotice('')
     try {
       const updated = await updateProductItem(accessToken, itemId, {
         status: 'retired',
       })
       setItem(updated)
+      setIsRetirementConfirmationOpen(false)
       setNotice('Product item was retired.')
     } catch (retireError) {
       if (retireError instanceof ApiError && retireError.status === 401) {
@@ -664,6 +667,36 @@ function ProductItemFormPage({
               </section>
             )}
 
+            {item?.status === 'published' && isRetirementConfirmationOpen && (
+              <div className={styles.retirementConfirmation} role="alert">
+                <div>
+                  <h2>Retire this product?</h2>
+                  <p>
+                    The product passport will be marked as retired. This action
+                    cannot be reversed from the application.
+                  </p>
+                </div>
+                <div className={styles.confirmationActions}>
+                  <button
+                    className={styles.textButton}
+                    type="button"
+                    onClick={() => setIsRetirementConfirmationOpen(false)}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={styles.dangerButton}
+                    type="button"
+                    onClick={retireItem}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Retiring…' : 'Yes, retire product'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className={styles.actions}>
               <button className={styles.secondaryButton} type="button" onClick={onBack}>
                 Back
@@ -690,11 +723,11 @@ function ProductItemFormPage({
                   )}
                 </>
               )}
-              {item?.status === 'published' && (
+              {item?.status === 'published' && !isRetirementConfirmationOpen && (
                 <button
                   className={styles.dangerButton}
                   type="button"
-                  onClick={retireItem}
+                  onClick={() => setIsRetirementConfirmationOpen(true)}
                   disabled={isSaving}
                 >
                   Retire product
