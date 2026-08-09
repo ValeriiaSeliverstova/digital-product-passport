@@ -85,6 +85,9 @@ def create_passport(
         model_code="EDS-40",
         name="EveryDaySafe 40",
         description="Compact safe for homes and small offices.",
+        image_public_id="digital-product-passport/product-models/example",
+        image_url="https://res.cloudinary.com/example/image/upload/model.png",
+        image_updated_at=datetime(2026, 8, 9, tzinfo=timezone.utc),
     )
     product_item = ProductItem(
         organization=organization,
@@ -124,6 +127,9 @@ def test_published_passport_is_public_without_authentication(
     assert result["category_name"] == "Safes"
     assert result["model_code"] == "EDS-40"
     assert result["model_name"] == "EveryDaySafe 40"
+    assert result["model_image_path"] == (
+        f"/api/product-models/{product_item.model_id}/image?v=1786233600"
+    )
     assert result["template_name"] == "Safe Passport"
     assert result["template_version"] == 2
     assert result["serial_number"] == product_item.serial_number

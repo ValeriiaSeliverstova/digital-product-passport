@@ -4,8 +4,11 @@ import AppHeader from '../components/AppHeader.jsx'
 import { ApiError } from '../services/api.js'
 import {
   createProductModel,
+  deleteProductModelImage,
   getProductModel,
+  productModelImageUrl,
   updateProductModel,
+  uploadProductModelImage,
 } from '../services/productModels.js'
 import { getTemplateListData } from '../services/templates.js'
 import styles from './ProductManagement.module.css'
@@ -31,6 +34,9 @@ function ProductModelFormPage({
   const [loadState, setLoadState] = useState('loading')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
+  const [productModel, setProductModel] = useState(null)
+  const [isUpdatingImage, setIsUpdatingImage] = useState(false)
+  const [imageNotice, setImageNotice] = useState('')
 
   useEffect(() => {
     let isCurrentRequest = true
@@ -47,6 +53,7 @@ function ProductModelFormPage({
         setCategories(templateData.categories)
         setTemplates(templateData.templates)
         if (model) {
+          setProductModel(model)
           setCategoryId(model.category_id)
           setTemplateId(model.template_id)
           setModelCode(model.model_code)
@@ -106,6 +113,61 @@ function ProductModelFormPage({
     }
   }
 
+  async function handleImageUpload(event) {
+    const image = event.target.files?.[0]
+    event.target.value = ''
+    if (!image) return
+
+    setError('')
+    setImageNotice('')
+    if (image.size > 2 * 1024 * 1024) {
+      setError('Product model image must not exceed 2 MB.')
+      return
+    }
+
+    setIsUpdatingImage(true)
+    try {
+      const updated = await uploadProductModelImage(accessToken, modelId, image)
+      setProductModel(updated)
+      setImageNotice('Product model image was updated.')
+    } catch (uploadError) {
+      if (uploadError instanceof ApiError && uploadError.status === 401) {
+        onLogout()
+        return
+      }
+      setError(
+        uploadError instanceof ApiError
+          ? uploadError.message
+          : 'The product model image could not be uploaded.',
+      )
+    } finally {
+      setIsUpdatingImage(false)
+    }
+  }
+
+  async function handleImageDelete() {
+    setIsUpdatingImage(true)
+    setError('')
+    setImageNotice('')
+    try {
+      await deleteProductModelImage(accessToken, modelId)
+      setProductModel((current) => ({
+        ...current,
+        has_image: false,
+        image_updated_at: null,
+      }))
+      setImageNotice('Product model image was deleted.')
+    } catch (deleteError) {
+      if (deleteError instanceof ApiError && deleteError.status === 401) {
+        onLogout()
+        return
+      }
+      setError('The product model image could not be deleted.')
+    } finally {
+      setIsUpdatingImage(false)
+    }
+  }
+
   const activeTemplates = templates.filter(
     (template) =>
       template.status === 'active' && template.category_id === categoryId,
@@ -147,6 +209,51 @@ function ProductModelFormPage({
         )}
         {loadState === 'success' && (
           <section className={styles.formCard}>
+            {isEditing && productModel && (
+              <div className={styles.modelImageEditor}>
+                {productModel.has_image ? (
+                  <img
+                    className={styles.modelImagePreview}
+                    src={productModelImageUrl(productModel)}
+                    alt={`${productModel.name} product model`}
+                  />
+                ) : (
+                  <div className={styles.modelImagePlaceholder}>
+                    No image
+                  </div>
+                )}
+                <div>
+                  <h2>Product image</h2>
+                  <p>PNG, JPEG, or WebP. Maximum size 2 MB.</p>
+                  <div className={styles.modelImageActions}>
+                    <label className={styles.imageUploadButton}>
+                      {isUpdatingImage ? 'Updating…' : 'Choose image'}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleImageUpload}
+                        disabled={isUpdatingImage}
+                      />
+                    </label>
+                    {productModel.has_image && (
+                      <button
+                        className={styles.imageDeleteButton}
+                        type="button"
+                        onClick={handleImageDelete}
+                        disabled={isUpdatingImage}
+                      >
+                        Delete image
+                      </button>
+                    )}
+                  </div>
+                  {imageNotice && (
+                    <p className={styles.imageNotice} role="status">
+                      {imageNotice}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
             <form className={styles.form} onSubmit={handleSubmit}>
               {isEditing ? (
                 <div className={styles.fieldGrid}>

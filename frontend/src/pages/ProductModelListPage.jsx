@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react'
 import AppHeader from '../components/AppHeader.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { ApiError } from '../services/api.js'
-import { getProductModels } from '../services/productModels.js'
+import {
+  getProductModels,
+  productModelImageUrl,
+} from '../services/productModels.js'
 import { getTemplateListData } from '../services/templates.js'
 import styles from './ProductManagement.module.css'
 
@@ -112,6 +115,13 @@ function ProductModelListPage({
           <section className={styles.cardGrid} aria-label="Product models">
             {models.map((model) => (
               <article className={styles.card} key={model.id}>
+                {model.has_image && (
+                  <img
+                    className={styles.modelCardImage}
+                    src={productModelImageUrl(model)}
+                    alt={`${model.name} product model`}
+                  />
+                )}
                 <div className={styles.cardHeading}>
                   <div>
                     <h2>{model.name}</h2>

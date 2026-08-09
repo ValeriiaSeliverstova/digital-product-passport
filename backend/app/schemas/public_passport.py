@@ -48,6 +48,7 @@ class PublicPassportResponse(BaseModel):
     model_code: str
     model_name: str
     model_description: str | None
+    model_image_path: str | None
     template_name: str
     template_version: int
     serial_number: str

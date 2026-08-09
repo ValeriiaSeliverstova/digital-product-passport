@@ -5,6 +5,20 @@ import cloudinary.uploader
 
 from app.config import settings
 
+MAX_IMAGE_BYTES = 2 * 1024 * 1024
+
+
+def detect_image_content_type(data: bytes) -> str | None:
+    """Recognize supported raster formats from bytes, not the filename."""
+
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
 
 def configure_cloudinary() -> None:
     """Configure the SDK only on the backend, where credentials stay private."""

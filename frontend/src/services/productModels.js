@@ -1,4 +1,4 @@
-import { apiRequest } from './api.js'
+import { apiRequest, apiUrl } from './api.js'
 
 /** List product models owned by the authenticated manufacturer. */
 export function getProductModels(accessToken) {
@@ -28,4 +28,32 @@ export function updateProductModel(accessToken, modelId, modelData) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(modelData),
   })
+}
+
+/** Upload or replace a product model's public image. */
+export function uploadProductModelImage(accessToken, modelId, image) {
+  const body = new FormData()
+  body.append('image', image)
+  return apiRequest(`/api/product-models/${modelId}/image`, {
+    method: 'PUT',
+    token: accessToken,
+    body,
+  })
+}
+
+/** Delete a product model's image. */
+export function deleteProductModelImage(accessToken, modelId) {
+  return apiRequest(`/api/product-models/${modelId}/image`, {
+    method: 'DELETE',
+    token: accessToken,
+  })
+}
+
+/** Build a cache-safe image URL from product-model response data. */
+export function productModelImageUrl(productModel) {
+  if (!productModel?.has_image) return ''
+  const version = productModel.image_updated_at
+    ? `?v=${encodeURIComponent(productModel.image_updated_at)}`
+    : ''
+  return apiUrl(`/api/product-models/${productModel.id}/image${version}`)
 }

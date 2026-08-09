@@ -137,6 +137,92 @@
   margin-block-start: var(--space-4);
 }
 
+.modelCardImage {
+  width: 100%;
+  height: 12rem;
+  margin-block-end: var(--space-4);
+  object-fit: contain;
+  background: var(--color-page);
+  border-radius: var(--radius-control);
+}
+
+.modelImageEditor {
+  display: grid;
+  margin-block-end: var(--space-6);
+  padding-block-end: var(--space-6);
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modelImageEditor h2,
+.modelImageEditor p {
+  margin: 0;
+}
+
+.modelImageEditor > div > p {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.modelImagePreview,
+.modelImagePlaceholder {
+  width: 100%;
+  height: 12rem;
+  object-fit: contain;
+  background: var(--color-page);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.modelImagePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.modelImageActions {
+  display: flex;
+  margin-block-start: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.imageUploadButton,
+.imageDeleteButton {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.imageUploadButton {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  cursor: pointer;
+}
+
+.imageUploadButton input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.imageDeleteButton {
+  color: var(--color-error);
+  background: var(--color-surface);
+  border: 1px solid var(--color-error);
+}
+
+.modelImageEditor .imageNotice {
+  margin-block-start: var(--space-3);
+  color: var(--color-success);
+}
+
 .metadata {
   margin: 0;
   padding-block-start: var(--space-4);
@@ -318,6 +404,11 @@
 
   .qrPreview {
     grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .modelImageEditor {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    align-items: center;
   }
 
   .card,

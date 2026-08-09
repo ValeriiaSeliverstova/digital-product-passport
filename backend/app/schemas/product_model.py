@@ -48,6 +48,8 @@ class ProductModelResponse(BaseModel):
     name: str
     description: str | None
     status: ProductModelStatus
+    has_image: bool
+    image_updated_at: datetime | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

@@ -86,6 +86,13 @@ class ProductModel(Base):
         nullable=False,
     )
 
+    image_public_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    image_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -98,3 +105,9 @@ class ProductModel(Base):
     items: Mapped[list[ProductItem]] = relationship(
         back_populates="product_model",
     )
+
+    @property
+    def has_image(self) -> bool:
+        """Tell API clients whether a product-model image is available."""
+
+        return self.image_public_id is not None and self.image_url is not None

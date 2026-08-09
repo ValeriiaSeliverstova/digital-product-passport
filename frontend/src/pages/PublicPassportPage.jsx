@@ -192,6 +192,13 @@ function PublicPassportPage({ publicId }) {
                   {passport.model_description}
                 </p>
               )}
+              {passport.model_image_path && (
+                <img
+                  className={styles.productImage}
+                  src={apiUrl(passport.model_image_path)}
+                  alt={`${passport.model_name} product model`}
+                />
+              )}
 
               <dl className={styles.summary}>
                 <div>

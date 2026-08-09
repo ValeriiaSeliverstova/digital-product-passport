@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from pytest import MonkeyPatch
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -126,6 +127,99 @@ def test_product_model_creation_uses_authenticated_organization(
         "A compact safe for homes and small offices."
     )
     assert result["status"] == "active"
+    assert result["has_image"] is False
+    assert result["image_updated_at"] is None
+
+
+def test_manufacturer_can_upload_view_and_delete_product_model_image(
+    client: TestClient,
+    db_session: Session,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    user, headers = create_manufacturer(db_session, "Manufacturer A")
+    category = create_category(db_session)
+    template = create_template(db_session, user, category)
+    create_response = client.post(
+        "/api/product-models",
+        headers=headers,
+        json=product_model_data(category, template),
+    )
+    model_id = create_response.json()["id"]
+    public_id = f"digital-product-passport/product-models/{model_id}"
+    image_url = "https://res.cloudinary.com/example/image/upload/model.png"
+    deleted: list[str] = []
+    monkeypatch.setattr(
+        "app.routers.product_models.upload_image",
+        lambda *_args, **_kwargs: (public_id, image_url),
+    )
+    monkeypatch.setattr(
+        "app.routers.product_models.delete_image",
+        deleted.append,
+    )
+
+    upload = client.put(
+        f"/api/product-models/{model_id}/image",
+        headers=headers,
+        files={
+            "image": (
+                "model.png",
+                b"\x89PNG\r\n\x1a\nmodel-image",
+                "image/png",
+            ),
+        },
+    )
+
+    assert upload.status_code == 200, upload.text
+    assert upload.json()["has_image"] is True
+    assert upload.json()["image_updated_at"] is not None
+
+    image = client.get(
+        f"/api/product-models/{model_id}/image",
+        follow_redirects=False,
+    )
+    assert image.status_code == 307
+    assert image.headers["location"] == image_url
+
+    delete = client.delete(
+        f"/api/product-models/{model_id}/image",
+        headers=headers,
+    )
+    assert delete.status_code == 204
+    assert deleted == [public_id]
+    assert client.get(f"/api/product-models/{model_id}/image").status_code == 404
+
+
+def test_product_model_image_upload_enforces_organization_ownership(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    _, headers = create_manufacturer(db_session, "Manufacturer A")
+    other_user, _ = create_manufacturer(db_session, "Manufacturer B")
+    category = create_category(db_session)
+    template = create_template(db_session, other_user, category)
+    product_model = ProductModel(
+        organization_id=other_user.organization_id,
+        category_id=category.id,
+        template_id=template.id,
+        model_code="OTHER-IMAGE",
+        name="Other Model",
+    )
+    db_session.add(product_model)
+    db_session.commit()
+
+    response = client.put(
+        f"/api/product-models/{product_model.id}/image",
+        headers=headers,
+        files={
+            "image": (
+                "model.png",
+                b"\x89PNG\r\n\x1a\nmodel-image",
+                "image/png",
+            ),
+        },
+    )
+
+    assert response.status_code == 404
 
 
 def test_product_model_requires_active_category_and_matching_active_template(

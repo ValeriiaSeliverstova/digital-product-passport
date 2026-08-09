@@ -1,13 +1,22 @@
 from typing import Annotated
+from datetime import datetime, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from cloudinary.exceptions import Error as CloudinaryError
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import require_manufacturer
+from app.image_storage import (
+    MAX_IMAGE_BYTES,
+    delete_image,
+    detect_image_content_type,
+    upload_image,
+)
 from app.models import PassportTemplate, ProductCategory, ProductModel, User
 from app.schemas.product_model import (
     ProductModelCreate,
@@ -130,6 +139,101 @@ def update_product_model(
     db.commit()
     db.refresh(product_model)
     return product_model
+
+
+@router.put("/{model_id}/image", response_model=ProductModelResponse)
+def upload_product_model_image(
+    model_id: UUID,
+    db: DatabaseSession,
+    current_user: Manufacturer,
+    image: Annotated[UploadFile, File()],
+) -> ProductModel:
+    """Upload or replace an owned product model's public image."""
+
+    image_data = image.file.read(MAX_IMAGE_BYTES + 1)
+    if len(image_data) > MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Product model image must not exceed 2 MB",
+        )
+    if detect_image_content_type(image_data) is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Product model image must be a PNG, JPEG, or WebP image",
+        )
+
+    product_model = get_owned_product_model(
+        db,
+        model_id,
+        current_user.organization_id,
+    )
+    try:
+        public_id, image_url = upload_image(
+            image_data,
+            folder="digital-product-passport/product-models",
+            public_id=str(product_model.id),
+        )
+    except (CloudinaryError, RuntimeError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Product model image could not be uploaded",
+        ) from error
+
+    product_model.image_public_id = public_id
+    product_model.image_url = image_url
+    product_model.image_updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(product_model)
+    return product_model
+
+
+@router.delete("/{model_id}/image", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product_model_image(
+    model_id: UUID,
+    db: DatabaseSession,
+    current_user: Manufacturer,
+) -> Response:
+    """Delete an owned product model's image from Cloudinary."""
+
+    product_model = get_owned_product_model(
+        db,
+        model_id,
+        current_user.organization_id,
+    )
+    if product_model.image_public_id is not None:
+        try:
+            delete_image(product_model.image_public_id)
+        except (CloudinaryError, RuntimeError) as error:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Product model image could not be deleted",
+            ) from error
+
+    product_model.image_public_id = None
+    product_model.image_url = None
+    product_model.image_updated_at = None
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/{model_id}/image", response_class=RedirectResponse)
+def get_product_model_image(
+    model_id: UUID,
+    db: DatabaseSession,
+) -> RedirectResponse:
+    """Redirect public image requests to Cloudinary's delivery CDN."""
+
+    product_model = db.get(ProductModel, model_id)
+    if product_model is None or product_model.image_url is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product model image not found",
+        )
+    return RedirectResponse(
+        url=product_model.image_url,
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 def get_owned_product_model(

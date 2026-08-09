@@ -10,15 +10,17 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import require_manufacturer
-from app.image_storage import delete_image, upload_image
+from app.image_storage import (
+    MAX_IMAGE_BYTES,
+    delete_image,
+    detect_image_content_type,
+    upload_image,
+)
 from app.models import Organization, User
 from app.schemas.organization import OrganizationResponse, OrganizationUpdate
 
 
 router = APIRouter(prefix="/api/organizations", tags=["organizations"])
-
-MAX_LOGO_BYTES = 2 * 1024 * 1024
-
 
 @router.put("/me", response_model=OrganizationResponse)
 def update_current_organization(
@@ -51,14 +53,14 @@ def upload_current_organization_logo(
 ) -> Organization:
     """Upload a small raster logo for the current manufacturer."""
 
-    logo_data = logo.file.read(MAX_LOGO_BYTES + 1)
-    if len(logo_data) > MAX_LOGO_BYTES:
+    logo_data = logo.file.read(MAX_IMAGE_BYTES + 1)
+    if len(logo_data) > MAX_IMAGE_BYTES:
         raise HTTPException(
             status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail="Organization logo must not exceed 2 MB",
         )
 
-    content_type = detect_logo_content_type(logo_data)
+    content_type = detect_image_content_type(logo_data)
     if content_type is None:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -140,15 +142,3 @@ def get_current_organization(db: Session, current_user: User) -> Organization:
             detail="Organization not found",
         )
     return organization
-
-
-def detect_logo_content_type(data: bytes) -> str | None:
-    """Recognize supported image formats from file bytes, not its filename."""
-
-    if data.startswith(b"\x89PNG\r\n\x1a\n"):
-        return "image/png"
-    if data.startswith(b"\xff\xd8\xff"):
-        return "image/jpeg"
-    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
-        return "image/webp"
-    return None

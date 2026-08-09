@@ -86,6 +86,7 @@ def get_public_passport(
         model_code=product_model.model_code,
         model_name=product_model.name,
         model_description=product_model.description,
+        model_image_path=get_product_model_image_path(product_model),
         template_name=template.name,
         template_version=template.version,
         serial_number=product_item.serial_number,
@@ -104,4 +105,16 @@ def get_logo_path(organization: Organization) -> str | None:
     path = f"/api/organizations/{organization.id}/logo"
     if organization.logo_updated_at is not None:
         return f"{path}?v={int(organization.logo_updated_at.timestamp())}"
+    return path
+
+
+def get_product_model_image_path(product_model: ProductModel) -> str | None:
+    """Build a cache-safe path when the product model has an image."""
+
+    if not product_model.has_image:
+        return None
+
+    path = f"/api/product-models/{product_model.id}/image"
+    if product_model.image_updated_at is not None:
+        return f"{path}?v={int(product_model.image_updated_at.timestamp())}"
     return path
