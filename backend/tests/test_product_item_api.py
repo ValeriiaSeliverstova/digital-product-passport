@@ -258,8 +258,76 @@ def test_product_item_queries_hide_other_organizations(
     )
 
     assert list_response.status_code == 200
-    assert [item["id"] for item in list_response.json()] == [owned["id"]]
+    assert [item["id"] for item in list_response.json()["items"]] == [
+        owned["id"],
+    ]
     assert other_response.status_code == 404
+
+
+def test_product_item_list_supports_filters_and_pagination(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    user, headers = create_manufacturer(db_session, "Manufacturer A")
+    product_model = create_product_model(db_session, user)
+    first = create_item_through_api(
+        client,
+        headers,
+        product_model,
+        serial_number="SAFE-ALPHA",
+    )
+    second = create_item_through_api(
+        client,
+        headers,
+        product_model,
+        serial_number="SAFE-BETA",
+    )
+    publish = client.put(
+        f"/api/product-items/{second['id']}",
+        headers=headers,
+        json={"status": "published"},
+    )
+    assert publish.status_code == 200
+
+    filtered = client.get(
+        "/api/product-items",
+        headers=headers,
+        params={
+            "search": "beta",
+            "status": "published",
+            "manufactured_from": "2026-08-01",
+            "manufactured_to": "2026-08-31",
+            "page": 1,
+            "page_size": 1,
+        },
+    )
+
+    assert filtered.status_code == 200, filtered.text
+    result = filtered.json()
+    assert result["total"] == 1
+    assert result["total_pages"] == 1
+    assert result["items"][0]["id"] == second["id"]
+    assert result["items"][0]["model_name"] == "EveryDaySafe 40"
+    assert "passport_data" not in result["items"][0]
+
+    first_page = client.get(
+        "/api/product-items?page=1&page_size=1",
+        headers=headers,
+    )
+    second_page = client.get(
+        "/api/product-items?page=2&page_size=1",
+        headers=headers,
+    )
+    assert first_page.json()["total"] == 2
+    assert first_page.json()["total_pages"] == 2
+    assert len(first_page.json()["items"]) == 1
+    assert len(second_page.json()["items"]) == 1
+
+    invalid_range = client.get(
+        "/api/product-items?manufactured_from=2026-09-01&manufactured_to=2026-08-01",
+        headers=headers,
+    )
+    assert invalid_range.status_code == 422
 
 
 def test_required_fields_are_enforced_when_item_is_published(

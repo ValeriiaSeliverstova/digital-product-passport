@@ -58,3 +58,26 @@ class ProductItemResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProductItemListItem(BaseModel):
+    """Compact product-item data used by the paginated list screen."""
+
+    id: UUID
+    model_id: UUID
+    model_name: str
+    serial_number: str
+    public_id: UUID
+    manufacture_date: date | None
+    status: ProductItemStatus
+    created_at: datetime
+
+
+class ProductItemPage(BaseModel):
+    """One filtered page of manufacturer-owned product items."""
+
+    items: list[ProductItemListItem]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

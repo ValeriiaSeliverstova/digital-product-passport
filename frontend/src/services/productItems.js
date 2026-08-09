@@ -1,8 +1,20 @@
 import { apiRequest } from './api.js'
 
 /** List physical product items owned by the authenticated manufacturer. */
-export function getProductItems(accessToken) {
-  return apiRequest('/api/product-items', { token: accessToken })
+export function getProductItems(accessToken, filters) {
+  const query = new URLSearchParams({
+    page: String(filters.page),
+    page_size: String(filters.pageSize),
+  })
+  if (filters.search) query.set('search', filters.search)
+  if (filters.status) query.set('status', filters.status)
+  if (filters.manufacturedFrom) {
+    query.set('manufactured_from', filters.manufacturedFrom)
+  }
+  if (filters.manufacturedTo) {
+    query.set('manufactured_to', filters.manufacturedTo)
+  }
+  return apiRequest(`/api/product-items?${query}`, { token: accessToken })
 }
 
 /** Load one owned physical product and its passport values. */

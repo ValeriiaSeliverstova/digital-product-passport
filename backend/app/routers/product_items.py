@@ -1,8 +1,9 @@
+from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import String, cast, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -20,7 +21,10 @@ from app.passport_validation import validate_passport_data
 from app.qr_codes import create_qr_code_svg
 from app.schemas.product_item import (
     ProductItemCreate,
+    ProductItemListItem,
+    ProductItemPage,
     ProductItemResponse,
+    ProductItemStatus,
     ProductItemUpdate,
 )
 
@@ -80,19 +84,86 @@ def create_product_item(
     return product_item
 
 
-@router.get("", response_model=list[ProductItemResponse])
+@router.get("", response_model=ProductItemPage)
 def list_product_items(
     db: DatabaseSession,
     current_user: Manufacturer,
-) -> list[ProductItem]:
-    """List only product items owned by the current manufacturer."""
+    search: Annotated[str | None, Query(min_length=1, max_length=255)] = None,
+    item_status: ProductItemStatus | None = Query(default=None, alias="status"),
+    manufactured_from: date | None = None,
+    manufactured_to: date | None = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> ProductItemPage:
+    """Search and paginate product items without loading passport JSON."""
 
-    statement = (
-        select(ProductItem)
-        .where(ProductItem.organization_id == current_user.organization_id)
-        .order_by(ProductItem.created_at.desc(), ProductItem.serial_number)
+    if (
+        manufactured_from is not None
+        and manufactured_to is not None
+        and manufactured_from > manufactured_to
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="manufactured_from cannot be later than manufactured_to",
+        )
+
+    filters = [ProductItem.organization_id == current_user.organization_id]
+    if search is not None:
+        value = search.strip().lower()
+        filters.append(
+            or_(
+                func.lower(ProductItem.serial_number).contains(
+                    value,
+                    autoescape=True,
+                ),
+                func.lower(ProductModel.name).contains(value, autoescape=True),
+                cast(ProductItem.public_id, String).contains(
+                    value,
+                    autoescape=True,
+                ),
+            ),
+        )
+    if item_status is not None:
+        filters.append(ProductItem.status == item_status)
+    if manufactured_from is not None:
+        filters.append(ProductItem.manufacture_date >= manufactured_from)
+    if manufactured_to is not None:
+        filters.append(ProductItem.manufacture_date <= manufactured_to)
+
+    base_statement = (
+        select(ProductItem, ProductModel.name.label("model_name"))
+        .join(ProductModel, ProductItem.model_id == ProductModel.id)
+        .where(*filters)
     )
-    return list(db.scalars(statement).all())
+    total = db.scalar(
+        select(func.count()).select_from(base_statement.subquery()),
+    ) or 0
+    rows = db.execute(
+        base_statement
+        .order_by(ProductItem.created_at.desc(), ProductItem.serial_number)
+        .offset((page - 1) * page_size)
+        .limit(page_size),
+    ).all()
+
+    return ProductItemPage(
+        items=[
+            ProductItemListItem(
+                id=item.id,
+                model_id=item.model_id,
+                model_name=model_name,
+                serial_number=item.serial_number,
+                public_id=item.public_id,
+                manufacture_date=item.manufacture_date,
+                status=item.status,
+                created_at=item.created_at,
+            )
+            for item, model_name in rows
+        ],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
 
 
 @router.get("/{item_id}", response_model=ProductItemResponse)

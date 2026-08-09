@@ -37,6 +37,7 @@ function ProductModelFormPage({
   const [productModel, setProductModel] = useState(null)
   const [isUpdatingImage, setIsUpdatingImage] = useState(false)
   const [imageNotice, setImageNotice] = useState('')
+  const [imageError, setImageError] = useState('')
 
   useEffect(() => {
     let isCurrentRequest = true
@@ -118,10 +119,10 @@ function ProductModelFormPage({
     event.target.value = ''
     if (!image) return
 
-    setError('')
+    setImageError('')
     setImageNotice('')
     if (image.size > 2 * 1024 * 1024) {
-      setError('Product model image must not exceed 2 MB.')
+      setImageError('Product model image must not exceed 2 MB.')
       return
     }
 
@@ -135,7 +136,7 @@ function ProductModelFormPage({
         onLogout()
         return
       }
-      setError(
+      setImageError(
         uploadError instanceof ApiError
           ? uploadError.message
           : 'The product model image could not be uploaded.',
@@ -147,7 +148,7 @@ function ProductModelFormPage({
 
   async function handleImageDelete() {
     setIsUpdatingImage(true)
-    setError('')
+    setImageError('')
     setImageNotice('')
     try {
       await deleteProductModelImage(accessToken, modelId)
@@ -162,7 +163,7 @@ function ProductModelFormPage({
         onLogout()
         return
       }
-      setError('The product model image could not be deleted.')
+      setImageError('The product model image could not be deleted.')
     } finally {
       setIsUpdatingImage(false)
     }
@@ -246,12 +247,17 @@ function ProductModelFormPage({
                       </button>
                     )}
                   </div>
-                  {imageNotice && (
-                    <p className={styles.imageNotice} role="status">
-                      {imageNotice}
-                    </p>
-                  )}
                 </div>
+                {imageNotice && (
+                  <p className={styles.imageNotice} role="status">
+                    {imageNotice}
+                  </p>
+                )}
+                {imageError && (
+                  <p className={styles.imageError} role="alert">
+                    {imageError}
+                  </p>
+                )}
               </div>
             )}
             <form className={styles.form} onSubmit={handleSubmit}>
