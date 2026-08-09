@@ -71,6 +71,10 @@ function EditTemplatePage({
   const [name, setName] = useState('')
   const [isSavingName, setIsSavingName] = useState(false)
   const [fieldFormMode, setFieldFormMode] = useState(null)
+  const [fieldSearch, setFieldSearch] = useState('')
+  const [fieldType, setFieldType] = useState('')
+  const [fieldAccess, setFieldAccess] = useState('')
+  const [fieldRequirement, setFieldRequirement] = useState('')
   const [isSavingField, setIsSavingField] = useState(false)
   const [deletingFieldId, setDeletingFieldId] = useState(null)
   const [isDeletingField, setIsDeletingField] = useState(false)
@@ -100,6 +104,10 @@ function EditTemplatePage({
           })
           setName(templateData.name)
           setFieldFormMode(null)
+          setFieldSearch('')
+          setFieldType('')
+          setFieldAccess('')
+          setFieldRequirement('')
           setDeletingFieldId(null)
           setPendingStatus(null)
           setVersions(
@@ -305,6 +313,30 @@ function EditTemplatePage({
   const hasAnotherDraft = draftVersion && draftVersion.id !== template?.id
   const isOlderVersion =
     !draftVersion && template?.id !== latestVersion?.id
+  const normalizedFieldSearch = fieldSearch.trim().toLowerCase()
+  const filteredFields = (template?.fields || []).filter((field) => {
+    const matchesSearch =
+      !normalizedFieldSearch ||
+      field.label.toLowerCase().includes(normalizedFieldSearch) ||
+      field.code.toLowerCase().includes(normalizedFieldSearch)
+    const matchesType = !fieldType || field.data_type === fieldType
+    const matchesAccess = !fieldAccess || field.access_level === fieldAccess
+    const matchesRequirement =
+      !fieldRequirement ||
+      (fieldRequirement === 'required' && field.is_required) ||
+      (fieldRequirement === 'optional' && !field.is_required)
+    return matchesSearch && matchesType && matchesAccess && matchesRequirement
+  })
+  const hasFieldFilters = Boolean(
+    fieldSearch || fieldType || fieldAccess || fieldRequirement,
+  )
+
+  function clearFieldFilters() {
+    setFieldSearch('')
+    setFieldType('')
+    setFieldAccess('')
+    setFieldRequirement('')
+  }
 
   return (
     <div className={styles.page}>
@@ -606,6 +638,72 @@ function EditTemplatePage({
                 )}
               </div>
 
+              {template.fields.length > 0 && (
+                <div className={styles.fieldFilters}>
+                  <div className={styles.fieldFilterControl}>
+                    <label htmlFor="field-search">Label or code</label>
+                    <input
+                      id="field-search"
+                      type="search"
+                      placeholder="Search fields"
+                      value={fieldSearch}
+                      onChange={(event) => setFieldSearch(event.target.value)}
+                    />
+                  </div>
+                  <div className={styles.fieldFilterControl}>
+                    <label htmlFor="field-type-filter">Type</label>
+                    <select
+                      id="field-type-filter"
+                      value={fieldType}
+                      onChange={(event) => setFieldType(event.target.value)}
+                    >
+                      <option value="">All types</option>
+                      {Object.entries(typeLabels).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.fieldFilterControl}>
+                    <label htmlFor="field-access-filter">Access</label>
+                    <select
+                      id="field-access-filter"
+                      value={fieldAccess}
+                      onChange={(event) => setFieldAccess(event.target.value)}
+                    >
+                      <option value="">All access levels</option>
+                      <option value="public">Public</option>
+                      <option value="manufacturer">Manufacturer only</option>
+                    </select>
+                  </div>
+                  <div className={styles.fieldFilterControl}>
+                    <label htmlFor="field-required-filter">Requirement</label>
+                    <select
+                      id="field-required-filter"
+                      value={fieldRequirement}
+                      onChange={(event) => setFieldRequirement(event.target.value)}
+                    >
+                      <option value="">Required and optional</option>
+                      <option value="required">Required</option>
+                      <option value="optional">Optional</option>
+                    </select>
+                  </div>
+                  <div className={styles.fieldFilterSummary}>
+                    <span>
+                      Showing {filteredFields.length} of {template.fields.length}
+                    </span>
+                    {hasFieldFilters && (
+                      <button
+                        className={styles.clearFieldFilters}
+                        type="button"
+                        onClick={clearFieldFilters}
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {fieldFormMode && (
                 <div className={styles.fieldFormCard}>
                   <h3>{fieldFormMode === 'new' ? 'Add field' : 'Edit field'}</h3>
@@ -629,7 +727,21 @@ function EditTemplatePage({
                 </div>
               )}
 
-              {template.fields.length > 0 && (
+              {template.fields.length > 0 && filteredFields.length === 0 && (
+                <div className={styles.emptyState}>
+                  <h3>No matching fields</h3>
+                  <p>Try changing or clearing the current filters.</p>
+                  <button
+                    className={styles.secondaryButton}
+                    type="button"
+                    onClick={clearFieldFilters}
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              )}
+
+              {filteredFields.length > 0 && (
                 <div className={styles.fieldTableWrapper}>
                   <table className={styles.fieldTable}>
                     <thead>
@@ -647,7 +759,7 @@ function EditTemplatePage({
                       </tr>
                     </thead>
                     <tbody>
-                      {template.fields.map((field) => (
+                      {filteredFields.map((field) => (
                         <Fragment key={field.id}>
                           <tr>
                             <td>{field.display_order}</td>
