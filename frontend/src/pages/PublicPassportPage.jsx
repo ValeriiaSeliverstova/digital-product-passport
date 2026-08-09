@@ -61,6 +61,42 @@ function supportPhoneUrl(phone) {
   return `tel:${phone.replace(/[^+\d]/g, '')}`
 }
 
+function SupportIcon({ type }) {
+  const paths = {
+    email: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="m3 7 9 6 9-6" />
+      </>
+    ),
+    phone: (
+      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c1 .3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z" />
+    ),
+    website: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+      </>
+    ),
+  }
+
+  return (
+    <svg
+      className={styles.supportIcon}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {paths[type]}
+    </svg>
+  )
+}
+
 function PublicPassportPage({ publicId }) {
   const [passport, setPassport] = useState(null)
   const [loadState, setLoadState] = useState('loading')
@@ -266,8 +302,11 @@ function PublicPassportPage({ publicId }) {
                       className={styles.supportLink}
                       href={supportEmailUrl(passport)}
                     >
-                      Email support
-                      <span>{passport.support_email}</span>
+                      <SupportIcon type="email" />
+                      <span className={styles.supportText}>
+                        <strong>Email support</strong>
+                        <span>{passport.support_email}</span>
+                      </span>
                     </a>
                   )}
                   {passport.support_phone && (
@@ -275,8 +314,11 @@ function PublicPassportPage({ publicId }) {
                       className={styles.supportLink}
                       href={supportPhoneUrl(passport.support_phone)}
                     >
-                      Call support
-                      <span>{passport.support_phone}</span>
+                      <SupportIcon type="phone" />
+                      <span className={styles.supportText}>
+                        <strong>Call support</strong>
+                        <span>{passport.support_phone}</span>
+                      </span>
                     </a>
                   )}
                   {passport.support_website && (
@@ -286,8 +328,11 @@ function PublicPassportPage({ publicId }) {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Support website
-                      <span>{passport.support_website}</span>
+                      <SupportIcon type="website" />
+                      <span className={styles.supportText}>
+                        <strong>Support website</strong>
+                        <span>{passport.support_website}</span>
+                      </span>
                     </a>
                   )}
                 </div>
