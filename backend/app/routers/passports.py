@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.database import get_db
-from app.models import PassportTemplate, ProductItem, ProductModel
+from app.models import Organization, PassportTemplate, ProductItem, ProductModel
 from app.schemas.public_passport import (
     PublicLifecycleEvent,
     PublicPassportField,
@@ -52,6 +52,7 @@ def get_public_passport(
 
     product_model = product_item.product_model
     template = product_model.template
+    organization = product_item.organization
     public_fields = [
         PublicPassportField(
             code=field.code,
@@ -76,10 +77,11 @@ def get_public_passport(
 
     return PublicPassportResponse(
         public_id=product_item.public_id,
-        manufacturer_name=product_item.organization.name,
-        support_email=product_item.organization.contact_email,
-        support_phone=product_item.organization.phone,
-        support_website=product_item.organization.website,
+        manufacturer_name=organization.name,
+        manufacturer_logo_path=get_logo_path(organization),
+        support_email=organization.contact_email,
+        support_phone=organization.phone,
+        support_website=organization.website,
         category_name=product_model.category.name,
         model_code=product_model.model_code,
         model_name=product_model.name,
@@ -91,3 +93,15 @@ def get_public_passport(
         fields=public_fields,
         lifecycle_events=public_events,
     )
+
+
+def get_logo_path(organization: Organization) -> str | None:
+    """Build a cache-safe public path only when the organization has a logo."""
+
+    if not organization.has_logo:
+        return None
+
+    path = f"/api/organizations/{organization.id}/logo"
+    if organization.logo_updated_at is not None:
+        return f"{path}?v={int(organization.logo_updated_at.timestamp())}"
+    return path

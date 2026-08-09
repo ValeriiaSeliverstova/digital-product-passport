@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { ApiError } from '../services/api.js'
+import { ApiError, apiUrl } from '../services/api.js'
 import { getPublicPassport } from '../services/passports.js'
 import styles from './PublicPassportPage.module.css'
 
@@ -160,7 +160,16 @@ function PublicPassportPage({ publicId }) {
               <dl className={styles.summary}>
                 <div>
                   <dt>Manufacturer</dt>
-                  <dd>{passport.manufacturer_name}</dd>
+                  <dd className={styles.manufacturerName}>
+                    {passport.manufacturer_logo_path && (
+                      <img
+                        className={styles.manufacturerLogo}
+                        src={apiUrl(passport.manufacturer_logo_path)}
+                        alt=""
+                      />
+                    )}
+                    <span>{passport.manufacturer_name}</span>
+                  </dd>
                 </div>
                 <div>
                   <dt>Model code</dt>

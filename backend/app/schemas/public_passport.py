@@ -40,6 +40,7 @@ class PublicPassportResponse(BaseModel):
 
     public_id: UUID
     manufacturer_name: str
+    manufacturer_logo_path: str | None
     support_email: str | None
     support_phone: str | None
     support_website: str | None

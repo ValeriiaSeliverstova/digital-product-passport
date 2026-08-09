@@ -17,6 +17,9 @@ from app.models import (
 )
 
 
+PNG_LOGO = b"\x89PNG\r\n\x1a\npublic-passport-logo"
+
+
 def create_passport(
     db: Session,
     *,
@@ -29,6 +32,9 @@ def create_passport(
         contact_email="support@example.com",
         phone="+380 00 000 00 00",
         website="https://example.com/support",
+        logo_data=PNG_LOGO,
+        logo_content_type="image/png",
+        logo_updated_at=datetime(2026, 8, 9, tzinfo=timezone.utc),
     )
     category = ProductCategory(
         code=f"SAFES_{uuid4().hex}",
@@ -113,6 +119,9 @@ def test_published_passport_is_public_without_authentication(
     result = response.json()
     assert result["public_id"] == str(product_item.public_id)
     assert result["manufacturer_name"] == "Example Safe Manufacturer"
+    assert result["manufacturer_logo_path"] == (
+        f"/api/organizations/{product_item.organization_id}/logo?v=1786233600"
+    )
     assert result["support_email"] == "support@example.com"
     assert result["support_phone"] == "+380 00 000 00 00"
     assert result["support_website"] == "https://example.com/support"
@@ -152,6 +161,22 @@ def test_private_and_missing_fields_are_not_returned(
     assert "internal_note" not in response_text
     assert "Never return this value publicly" not in response_text
     assert "optional_public_value" not in response_text
+
+
+def test_passport_has_no_logo_path_when_organization_has_no_logo(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    product_item = create_passport(db_session)
+    product_item.organization.logo_data = None
+    product_item.organization.logo_content_type = None
+    product_item.organization.logo_updated_at = None
+    db_session.commit()
+
+    response = client.get(f"/api/passports/{product_item.public_id}")
+
+    assert response.status_code == 200
+    assert response.json()["manufacturer_logo_path"] is None
 
 
 def test_only_public_lifecycle_events_are_returned_newest_first(
