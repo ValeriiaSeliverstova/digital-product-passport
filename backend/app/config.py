@@ -26,6 +26,10 @@ class Settings(BaseSettings):
 
     frontend_origin: str = "http://localhost:5173"
 
+    cloudinary_cloud_name: str | None = None
+    cloudinary_api_key: str | None = None
+    cloudinary_api_secret: SecretStr | None = None
+
     @field_validator("jwt_secret_key")
     @classmethod
     def validate_jwt_secret_key(cls, value: SecretStr) -> SecretStr:

@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from pytest import MonkeyPatch
 from sqlalchemy.orm import Session
 
 from app.models import Organization, Role, User
@@ -84,6 +85,7 @@ def test_manufacturer_can_update_own_organization(
 def test_manufacturer_can_upload_view_and_delete_logo(
     client: TestClient,
     db_session: Session,
+    monkeypatch: MonkeyPatch,
 ) -> None:
     organization = Organization(name="Logo Organization")
     user = create_user(
@@ -93,6 +95,18 @@ def test_manufacturer_can_upload_view_and_delete_logo(
     )
     headers = authorization_header(user)
     png_data = b"\x89PNG\r\n\x1a\n" + b"test-image-data"
+    deleted_public_ids: list[str] = []
+    monkeypatch.setattr(
+        "app.routers.organizations.upload_image",
+        lambda *_args, **_kwargs: (
+            f"digital-product-passport/organizations/{organization.id}",
+            "https://res.cloudinary.com/example/image/upload/logo.png",
+        ),
+    )
+    monkeypatch.setattr(
+        "app.routers.organizations.delete_image",
+        deleted_public_ids.append,
+    )
 
     upload = client.put(
         "/api/organizations/me/logo",
@@ -104,13 +118,20 @@ def test_manufacturer_can_upload_view_and_delete_logo(
     assert upload.json()["has_logo"] is True
     assert upload.json()["logo_updated_at"] is not None
 
-    image = client.get(f"/api/organizations/{organization.id}/logo")
-    assert image.status_code == 200
-    assert image.headers["content-type"] == "image/png"
-    assert image.content == png_data
+    image = client.get(
+        f"/api/organizations/{organization.id}/logo",
+        follow_redirects=False,
+    )
+    assert image.status_code == 307
+    assert image.headers["location"] == (
+        "https://res.cloudinary.com/example/image/upload/logo.png"
+    )
 
     delete = client.delete("/api/organizations/me/logo", headers=headers)
     assert delete.status_code == 204
+    assert deleted_public_ids == [
+        f"digital-product-passport/organizations/{organization.id}",
+    ]
     assert client.get(f"/api/organizations/{organization.id}/logo").status_code == 404
 
 

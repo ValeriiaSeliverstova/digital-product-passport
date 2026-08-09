@@ -3,11 +3,14 @@ from typing import Annotated
 from datetime import datetime, timezone
 from uuid import UUID
 
+from cloudinary.exceptions import Error as CloudinaryError
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies.auth import require_manufacturer
+from app.image_storage import delete_image, upload_image
 from app.models import Organization, User
 from app.schemas.organization import OrganizationResponse, OrganizationUpdate
 
@@ -41,14 +44,14 @@ def update_current_organization(
 
 
 @router.put("/me/logo", response_model=OrganizationResponse)
-async def upload_current_organization_logo(
+def upload_current_organization_logo(
     current_user: Annotated[User, Depends(require_manufacturer)],
     db: Annotated[Session, Depends(get_db)],
     logo: Annotated[UploadFile, File()],
 ) -> Organization:
     """Upload a small raster logo for the current manufacturer."""
 
-    logo_data = await logo.read(MAX_LOGO_BYTES + 1)
+    logo_data = logo.file.read(MAX_LOGO_BYTES + 1)
     if len(logo_data) > MAX_LOGO_BYTES:
         raise HTTPException(
             status_code=status.HTTP_413_CONTENT_TOO_LARGE,
@@ -63,8 +66,20 @@ async def upload_current_organization_logo(
         )
 
     organization = get_current_organization(db, current_user)
-    organization.logo_data = logo_data
-    organization.logo_content_type = content_type
+    try:
+        public_id, logo_url = upload_image(
+            logo_data,
+            folder="digital-product-passport/organizations",
+            public_id=str(organization.id),
+        )
+    except (CloudinaryError, RuntimeError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Organization logo could not be uploaded",
+        ) from error
+
+    organization.logo_public_id = public_id
+    organization.logo_url = logo_url
     organization.logo_updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(organization)
@@ -79,29 +94,38 @@ def delete_current_organization_logo(
     """Remove the current manufacturer's logo."""
 
     organization = get_current_organization(db, current_user)
-    organization.logo_data = None
-    organization.logo_content_type = None
+    if organization.logo_public_id is not None:
+        try:
+            delete_image(organization.logo_public_id)
+        except (CloudinaryError, RuntimeError) as error:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Organization logo could not be deleted",
+            ) from error
+
+    organization.logo_public_id = None
+    organization.logo_url = None
     organization.logo_updated_at = None
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get("/{organization_id}/logo", response_class=Response)
+@router.get("/{organization_id}/logo", response_class=RedirectResponse)
 def get_organization_logo(
     organization_id: UUID,
     db: Annotated[Session, Depends(get_db)],
-) -> Response:
+) -> RedirectResponse:
     """Return a public organization logo for display in product interfaces."""
 
     organization = db.get(Organization, organization_id)
-    if organization is None or organization.logo_data is None:
+    if organization is None or organization.logo_url is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Organization logo not found",
         )
-    return Response(
-        content=organization.logo_data,
-        media_type=organization.logo_content_type,
+    return RedirectResponse(
+        url=organization.logo_url,
+        status_code=status.HTTP_307_TEMPORARY_REDIRECT,
         headers={"Cache-Control": "public, max-age=3600"},
     )
 

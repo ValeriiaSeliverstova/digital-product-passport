@@ -16,10 +16,6 @@ from app.models import (
     User,
 )
 
-
-PNG_LOGO = b"\x89PNG\r\n\x1a\npublic-passport-logo"
-
-
 def create_passport(
     db: Session,
     *,
@@ -32,8 +28,8 @@ def create_passport(
         contact_email="support@example.com",
         phone="+380 00 000 00 00",
         website="https://example.com/support",
-        logo_data=PNG_LOGO,
-        logo_content_type="image/png",
+        logo_public_id="digital-product-passport/organizations/example",
+        logo_url="https://res.cloudinary.com/example/image/upload/logo.png",
         logo_updated_at=datetime(2026, 8, 9, tzinfo=timezone.utc),
     )
     category = ProductCategory(
@@ -168,8 +164,8 @@ def test_passport_has_no_logo_path_when_organization_has_no_logo(
     db_session: Session,
 ) -> None:
     product_item = create_passport(db_session)
-    product_item.organization.logo_data = None
-    product_item.organization.logo_content_type = None
+    product_item.organization.logo_public_id = None
+    product_item.organization.logo_url = None
     product_item.organization.logo_updated_at = None
     db_session.commit()
 

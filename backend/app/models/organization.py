@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, LargeBinary, String, func
+from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -68,13 +68,13 @@ class Organization(Base):
         nullable=True,
     )
 
-    logo_data: Mapped[bytes | None] = mapped_column(
-        LargeBinary,
+    logo_public_id: Mapped[str | None] = mapped_column(
+        String(255),
         nullable=True,
     )
 
-    logo_content_type: Mapped[str | None] = mapped_column(
-        String(50),
+    logo_url: Mapped[str | None] = mapped_column(
+        String(2048),
         nullable=True,
     )
 
@@ -97,4 +97,4 @@ class Organization(Base):
     def has_logo(self) -> bool:
         """Tell API clients whether a logo image is available."""
 
-        return self.logo_data is not None
+        return self.logo_public_id is not None and self.logo_url is not None
