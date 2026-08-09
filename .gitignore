@@ -71,5 +71,7 @@ backend/coverage/
 # Generated files
 frontend/.vite/
 
+backend/scripts/create_trello_plan.py
+backend/tests/test_trello_plan.py
 
 AGENTS.md

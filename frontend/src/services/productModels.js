@@ -54,6 +54,17 @@ export function uploadProductModelImage(accessToken, modelId, image) {
   })
 }
 
+/** Extract reviewable product-item suggestions from one PDF or image. */
+export function extractProductData(accessToken, modelId, document) {
+  const body = new FormData()
+  body.append('document', document)
+  return apiRequest(`/api/product-models/${modelId}/ai-extraction`, {
+    method: 'POST',
+    token: accessToken,
+    body,
+  })
+}
+
 /** Delete a product model's image. */
 export function deleteProductModelImage(accessToken, modelId) {
   return apiRequest(`/api/product-models/${modelId}/image`, {

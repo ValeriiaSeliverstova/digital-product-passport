@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.routers.ai_extraction import router as ai_extraction_router
 from app.routers.auth import router as auth_router
 from app.routers.categories import router as categories_router
 from app.routers.lifecycle_events import router as lifecycle_events_router
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(ai_extraction_router)
 app.include_router(categories_router)
 app.include_router(lifecycle_events_router)
 app.include_router(organizations_router)

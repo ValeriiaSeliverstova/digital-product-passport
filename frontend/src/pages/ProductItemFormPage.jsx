@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import AiDocumentUpload from '../components/AiDocumentUpload.jsx'
 import AppHeader from '../components/AppHeader.jsx'
 import NfcWriter from '../components/NfcWriter.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
@@ -245,6 +246,21 @@ function ProductItemFormPage({
     })
   }
 
+  function applyAiSuggestions(suggestions) {
+    if (suggestions.serialNumber !== undefined) {
+      setSerialNumber(String(suggestions.serialNumber))
+    }
+    if (suggestions.manufactureDate !== undefined) {
+      setManufactureDate(String(suggestions.manufactureDate))
+    }
+    setPassportData((current) => ({
+      ...current,
+      ...suggestions.passportData,
+    }))
+    setError('')
+    setNotice('Selected AI suggestions were applied. Review them before saving.')
+  }
+
   async function saveItem(targetStatus) {
     setIsSaving(true)
     setError('')
@@ -464,6 +480,16 @@ function ProductItemFormPage({
                 </div>
               </div>
             </section>
+
+            {template && isDraft && (
+              <AiDocumentUpload
+                key={selectedModelId}
+                accessToken={accessToken}
+                productModelId={selectedModelId}
+                onApply={applyAiSuggestions}
+                onUnauthorized={onLogout}
+              />
+            )}
 
             {template && (
               <section className={styles.sectionCard}>

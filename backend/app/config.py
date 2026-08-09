@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     cloudinary_api_key: str | None = None
     cloudinary_api_secret: SecretStr | None = None
 
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str = Field(default="gemini-3.6-flash", min_length=1)
+
     @field_validator("jwt_secret_key")
     @classmethod
     def validate_jwt_secret_key(cls, value: SecretStr) -> SecretStr:
