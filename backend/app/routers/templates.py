@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -15,6 +15,9 @@ from app.schemas.passport_template import (
     PassportTemplateDetailResponse,
     PassportTemplateResponse,
     PassportTemplateUpdate,
+    TemplateFamilyPage,
+    TemplateFamilySummary,
+    TemplateStatus,
 )
 from app.schemas.template_field import (
     TemplateFieldCreateList,
@@ -81,6 +84,81 @@ def list_templates(
         .order_by(PassportTemplate.created_at.desc(), PassportTemplate.name)
     )
     return list(db.scalars(statement).all())
+
+
+@router.get("/families", response_model=TemplateFamilyPage)
+def list_template_families(
+    db: DatabaseSession,
+    current_user: Manufacturer,
+    search: Annotated[str | None, Query(min_length=1, max_length=255)] = None,
+    category_id: UUID | None = None,
+    template_status: TemplateStatus | None = Query(default=None, alias="status"),
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> TemplateFamilyPage:
+    """Return filtered template families for the manufacturer list screen."""
+
+    family_versions = (
+        select(
+            PassportTemplate.template_family_id.label("family_id"),
+            func.max(PassportTemplate.version).label("latest_version"),
+            func.count(PassportTemplate.id).label("version_count"),
+        )
+        .where(
+            PassportTemplate.organization_id == current_user.organization_id,
+        )
+        .group_by(PassportTemplate.template_family_id)
+        .subquery()
+    )
+    filters = []
+    if search is not None:
+        filters.append(
+            func.lower(PassportTemplate.name).contains(
+                search.strip().lower(),
+                autoescape=True,
+            ),
+        )
+    if category_id is not None:
+        filters.append(PassportTemplate.category_id == category_id)
+    if template_status is not None:
+        filters.append(PassportTemplate.status == template_status)
+
+    base_statement = (
+        select(PassportTemplate, family_versions.c.version_count)
+        .join(
+            family_versions,
+            (PassportTemplate.template_family_id == family_versions.c.family_id)
+            & (PassportTemplate.version == family_versions.c.latest_version),
+        )
+        .where(*filters)
+    )
+    total = db.scalar(
+        select(func.count()).select_from(base_statement.subquery()),
+    ) or 0
+    rows = db.execute(
+        base_statement
+        .order_by(PassportTemplate.created_at.desc(), PassportTemplate.name)
+        .offset((page - 1) * page_size)
+        .limit(page_size),
+    ).all()
+
+    return TemplateFamilyPage(
+        items=[
+            TemplateFamilySummary.model_validate(
+                {
+                    **PassportTemplateResponse.model_validate(
+                        template,
+                    ).model_dump(),
+                    "version_count": version_count,
+                },
+            )
+            for template, version_count in rows
+        ],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
+    )
 
 
 @router.get(

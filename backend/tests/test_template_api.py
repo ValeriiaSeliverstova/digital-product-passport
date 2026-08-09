@@ -165,6 +165,93 @@ def test_template_queries_hide_other_organizations(
     assert other_response.status_code == 404
 
 
+def test_template_family_list_supports_filters_and_pagination(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    user, headers = create_user_and_headers(
+        db_session,
+        "manufacturer_user",
+        organization_name="Manufacturer A",
+    )
+    other_user, _ = create_user_and_headers(
+        db_session,
+        "manufacturer_user",
+        organization_name="Manufacturer B",
+    )
+    safes = create_category(db_session)
+    boxes = create_category(db_session)
+    first_family_id = uuid4()
+    templates = [
+        PassportTemplate(
+            template_family_id=first_family_id,
+            organization_id=user.organization_id,
+            category_id=safes.id,
+            name="Alpha Safe",
+            version=1,
+            status="archived",
+        ),
+        PassportTemplate(
+            template_family_id=first_family_id,
+            organization_id=user.organization_id,
+            category_id=safes.id,
+            name="Alpha Safe",
+            version=2,
+            status="active",
+        ),
+        PassportTemplate(
+            organization_id=user.organization_id,
+            category_id=boxes.id,
+            name="Beta Deposit Box",
+            status="draft",
+        ),
+        PassportTemplate(
+            organization_id=other_user.organization_id,
+            category_id=safes.id,
+            name="Other Organization Safe",
+            status="active",
+        ),
+    ]
+    db_session.add_all(templates)
+    db_session.commit()
+
+    filtered = client.get(
+        "/api/templates/families",
+        headers=headers,
+        params={
+            "search": "alpha",
+            "category_id": str(safes.id),
+            "status": "active",
+            "page": 1,
+            "page_size": 1,
+        },
+    )
+
+    assert filtered.status_code == 200, filtered.text
+    result = filtered.json()
+    assert result["total"] == 1
+    assert result["total_pages"] == 1
+    assert result["page"] == 1
+    assert result["page_size"] == 1
+    assert len(result["items"]) == 1
+    assert result["items"][0]["name"] == "Alpha Safe"
+    assert result["items"][0]["version"] == 2
+    assert result["items"][0]["version_count"] == 2
+
+    first_page = client.get(
+        "/api/templates/families?page=1&page_size=1",
+        headers=headers,
+    )
+    second_page = client.get(
+        "/api/templates/families?page=2&page_size=1",
+        headers=headers,
+    )
+    assert first_page.json()["total"] == 2
+    assert first_page.json()["total_pages"] == 2
+    assert len(first_page.json()["items"]) == 1
+    assert len(second_page.json()["items"]) == 1
+
+
 def test_template_field_crud(
     client: TestClient,
     db_session: Session,

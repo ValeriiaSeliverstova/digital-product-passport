@@ -15,6 +15,23 @@ export async function getTemplateListData(accessToken) {
   return { templates, categories }
 }
 
+/** Load one filtered page of template families for the list screen. */
+export async function getTemplateFamilyListData(accessToken, filters) {
+  const query = new URLSearchParams({
+    page: String(filters.page),
+    page_size: String(filters.pageSize),
+  })
+  if (filters.search) query.set('search', filters.search)
+  if (filters.categoryId) query.set('category_id', filters.categoryId)
+  if (filters.status) query.set('status', filters.status)
+
+  const [templatePage, categories] = await Promise.all([
+    apiRequest(`/api/templates/families?${query}`, { token: accessToken }),
+    getCategories(),
+  ])
+  return { templatePage, categories }
+}
+
 /** Create a new draft template owned by the authenticated organization. */
 export function createTemplate(accessToken, templateData) {
   return apiRequest('/api/templates', {
