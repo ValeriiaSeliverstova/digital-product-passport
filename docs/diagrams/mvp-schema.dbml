@@ -90,10 +90,18 @@ Table product_items {
 Table lifecycle_events {
   id uuid [pk]
   item_id uuid [ref: > product_items.id]
+  created_by_user_id uuid [ref: > users.id]
   event_type varchar
   occurred_at timestamp
   description text
+  service_provider varchar
+  access_level varchar
   event_data jsonb
+  created_at timestamp
+
+  indexes {
+    (item_id, occurred_at)
+  }
 }
 
 Table data_carriers {

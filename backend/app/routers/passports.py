@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from app.database import get_db
 from app.models import PassportTemplate, ProductItem, ProductModel
 from app.schemas.public_passport import (
+    PublicLifecycleEvent,
     PublicPassportField,
     PublicPassportResponse,
 )
@@ -35,6 +36,7 @@ def get_public_passport(
             joinedload(ProductItem.product_model)
             .joinedload(ProductModel.template)
             .selectinload(PassportTemplate.fields),
+            selectinload(ProductItem.lifecycle_events),
         )
         .where(
             ProductItem.public_id == public_id,
@@ -62,6 +64,15 @@ def get_public_passport(
         and field.code in product_item.passport_data
         and product_item.passport_data[field.code] is not None
     ]
+    public_events = [
+        PublicLifecycleEvent.model_validate(event, from_attributes=True)
+        for event in sorted(
+            product_item.lifecycle_events,
+            key=lambda lifecycle_event: lifecycle_event.occurred_at,
+            reverse=True,
+        )
+        if event.access_level == "public"
+    ]
 
     return PublicPassportResponse(
         public_id=product_item.public_id,
@@ -75,4 +86,5 @@ def get_public_passport(
         serial_number=product_item.serial_number,
         manufacture_date=product_item.manufacture_date,
         fields=public_fields,
+        lifecycle_events=public_events,
     )

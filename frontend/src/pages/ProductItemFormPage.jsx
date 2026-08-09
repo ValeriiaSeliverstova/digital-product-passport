@@ -5,7 +5,9 @@ import NfcWriter from '../components/NfcWriter.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { ApiError } from '../services/api.js'
 import {
+  createLifecycleEvent,
   createProductItem,
+  getLifecycleEvents,
   getProductItem,
   getProductItemQrCode,
   updateProductItem,
@@ -16,6 +18,31 @@ import {
 } from '../services/productModels.js'
 import { getTemplate, getTemplateListData } from '../services/templates.js'
 import styles from './ProductManagement.module.css'
+
+const eventTypes = [
+  'manufacturing',
+  'installation',
+  'inspection',
+  'maintenance',
+  'repair',
+  'certification',
+  'retirement',
+]
+
+const eventDateFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
+
+function defaultEventTime() {
+  const now = new Date()
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+  return now.toISOString().slice(0, 16)
+}
+
+function eventLabel(value) {
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
 
 function convertFieldValue(field, value) {
   if (value === '') return undefined
@@ -117,6 +144,13 @@ function ProductItemFormPage({
   const [isGeneratingQrCode, setIsGeneratingQrCode] = useState(false)
   const [notice, setNotice] = useState(initialNotice)
   const [error, setError] = useState('')
+  const [lifecycleEvents, setLifecycleEvents] = useState([])
+  const [eventType, setEventType] = useState('maintenance')
+  const [eventTime, setEventTime] = useState(defaultEventTime)
+  const [eventDescription, setEventDescription] = useState('')
+  const [eventProvider, setEventProvider] = useState('')
+  const [eventAccessLevel, setEventAccessLevel] = useState('public')
+  const [isSavingEvent, setIsSavingEvent] = useState(false)
 
   useEffect(() => {
     let isCurrentRequest = true
@@ -136,6 +170,9 @@ function ProductItemFormPage({
           setSerialNumber(itemData.serial_number)
           setManufactureDate(itemData.manufacture_date || '')
           setPassportData(itemData.passport_data)
+          if (itemData.status !== 'draft') {
+            setLifecycleEvents(await getLifecycleEvents(accessToken, itemId))
+          }
         } else {
           const [modelData, templateData] = await Promise.all([
             getProductModels(accessToken),
@@ -294,6 +331,45 @@ function ProductItemFormPage({
     }
   }
 
+  async function addLifecycleEvent(event) {
+    event.preventDefault()
+    setIsSavingEvent(true)
+    setError('')
+    setNotice('')
+    try {
+      const created = await createLifecycleEvent(accessToken, itemId, {
+        event_type: eventType,
+        occurred_at: new Date(eventTime).toISOString(),
+        description: eventDescription || null,
+        service_provider: eventProvider || null,
+        access_level: eventAccessLevel,
+        event_data: {},
+      })
+      setLifecycleEvents((current) =>
+        [...current, created].sort(
+          (first, second) =>
+            new Date(second.occurred_at) - new Date(first.occurred_at),
+        ),
+      )
+      setEventDescription('')
+      setEventProvider('')
+      setEventTime(defaultEventTime())
+      setNotice('Lifecycle event was added.')
+    } catch (eventError) {
+      if (eventError instanceof ApiError && eventError.status === 401) {
+        onLogout()
+        return
+      }
+      setError(
+        eventError instanceof ApiError
+          ? eventError.message
+          : 'The lifecycle event could not be added.',
+      )
+    } finally {
+      setIsSavingEvent(false)
+    }
+  }
+
   const selectedModel = models.find((model) => model.id === selectedModelId)
   const isDraft = !isEditing || item?.status === 'draft'
 
@@ -405,6 +481,109 @@ function ProductItemFormPage({
                     />
                   ))}
                 </div>
+              </section>
+            )}
+
+            {item && item.status !== 'draft' && (
+              <section className={styles.sectionCard}>
+                <div className={styles.sectionHeading}>
+                  <div>
+                    <h2>Lifecycle history</h2>
+                    <p>Record maintenance and other events for this product.</p>
+                  </div>
+                </div>
+
+                <form className={styles.eventForm} onSubmit={addLifecycleEvent}>
+                  <div className={styles.field}>
+                    <label htmlFor="event-type">Event type</label>
+                    <select
+                      id="event-type"
+                      value={eventType}
+                      onChange={(event) => setEventType(event.target.value)}
+                    >
+                      {eventTypes.map((type) => (
+                        <option key={type} value={type}>{eventLabel(type)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.field}>
+                    <label htmlFor="event-time">Date and time</label>
+                    <input
+                      id="event-time"
+                      type="datetime-local"
+                      value={eventTime}
+                      onChange={(event) => setEventTime(event.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label htmlFor="event-provider">Service provider (optional)</label>
+                    <input
+                      id="event-provider"
+                      maxLength="255"
+                      value={eventProvider}
+                      onChange={(event) => setEventProvider(event.target.value)}
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label htmlFor="event-access">Visibility</label>
+                    <select
+                      id="event-access"
+                      value={eventAccessLevel}
+                      onChange={(event) => setEventAccessLevel(event.target.value)}
+                    >
+                      <option value="public">Public passport</option>
+                      <option value="manufacturer">Manufacturer only</option>
+                    </select>
+                  </div>
+                  <div className={`${styles.field} ${styles.eventDescription}`}>
+                    <label htmlFor="event-description">Description (optional)</label>
+                    <textarea
+                      id="event-description"
+                      maxLength="2000"
+                      rows="3"
+                      value={eventDescription}
+                      onChange={(event) => setEventDescription(event.target.value)}
+                    />
+                  </div>
+                  <div className={`${styles.actions} ${styles.eventActions}`}>
+                    <button
+                      className={styles.primaryButton}
+                      type="submit"
+                      disabled={isSavingEvent || !eventTime}
+                    >
+                      {isSavingEvent ? 'Adding…' : 'Add lifecycle event'}
+                    </button>
+                  </div>
+                </form>
+
+                {lifecycleEvents.length > 0 ? (
+                  <ol className={styles.eventList}>
+                    {lifecycleEvents.map((event) => (
+                      <li key={event.id} className={styles.eventItem}>
+                        <div className={styles.eventItemHeading}>
+                          <h3>{eventLabel(event.event_type)}</h3>
+                          <span className={styles.visibilityLabel}>
+                            {event.access_level === 'public'
+                              ? 'Public'
+                              : 'Manufacturer only'}
+                          </span>
+                        </div>
+                        <time dateTime={event.occurred_at}>
+                          {eventDateFormatter.format(new Date(event.occurred_at))}
+                        </time>
+                        {event.description && <p>{event.description}</p>}
+                        {event.service_provider && (
+                          <p className={styles.helperText}>
+                            Service provider: {event.service_provider}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className={styles.emptyText}>No lifecycle events yet.</p>
+                )}
               </section>
             )}
 

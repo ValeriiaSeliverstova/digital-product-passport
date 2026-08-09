@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -6,11 +6,14 @@ from sqlalchemy.orm import Session
 
 from app.models import (
     Organization,
+    LifecycleEvent,
     PassportTemplate,
     ProductCategory,
     ProductItem,
     ProductModel,
     TemplateField,
+    Role,
+    User,
 )
 
 
@@ -141,6 +144,62 @@ def test_private_and_missing_fields_are_not_returned(
     assert "internal_note" not in response_text
     assert "Never return this value publicly" not in response_text
     assert "optional_public_value" not in response_text
+
+
+def test_only_public_lifecycle_events_are_returned_newest_first(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    product_item = create_passport(db_session)
+    role = Role(name="manufacturer_user")
+    user = User(
+        organization=product_item.organization,
+        role=role,
+        email=f"{uuid4()}@example.com",
+        password_hash="not-used-by-public-passport-tests",
+    )
+    db_session.add(user)
+    db_session.flush()
+    product_item.lifecycle_events.extend(
+        [
+            LifecycleEvent(
+                created_by=user,
+                event_type="maintenance",
+                occurred_at=datetime(2026, 8, 1, 9, tzinfo=timezone.utc),
+                description="Annual maintenance completed",
+                service_provider="Example Service Ltd.",
+                access_level="public",
+                event_data={"result": "passed"},
+            ),
+            LifecycleEvent(
+                created_by=user,
+                event_type="inspection",
+                occurred_at=datetime(2026, 8, 5, 9, tzinfo=timezone.utc),
+                description="Public safety inspection",
+                access_level="public",
+            ),
+            LifecycleEvent(
+                created_by=user,
+                event_type="repair",
+                occurred_at=datetime(2026, 8, 8, 9, tzinfo=timezone.utc),
+                description="Confidential repair note",
+                access_level="manufacturer",
+            ),
+        ],
+    )
+    db_session.commit()
+
+    response = client.get(f"/api/passports/{product_item.public_id}")
+
+    assert response.status_code == 200, response.text
+    events = response.json()["lifecycle_events"]
+    assert [event["event_type"] for event in events] == [
+        "inspection",
+        "maintenance",
+    ]
+    assert events[1]["service_provider"] == "Example Service Ltd."
+    assert events[1]["event_data"] == {"result": "passed"}
+    assert "Confidential repair note" not in response.text
 
 
 def test_non_published_and_unknown_passports_return_not_found(

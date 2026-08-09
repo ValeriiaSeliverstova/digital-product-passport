@@ -20,6 +20,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
+    from app.models.lifecycle_event import LifecycleEvent
     from app.models.organization import Organization
     from app.models.product_model import ProductModel
 
@@ -104,3 +105,6 @@ class ProductItem(Base):
 
     organization: Mapped[Organization] = relationship()
     product_model: Mapped[ProductModel] = relationship(back_populates="items")
+    lifecycle_events: Mapped[list[LifecycleEvent]] = relationship(
+        back_populates="product_item",
+    )

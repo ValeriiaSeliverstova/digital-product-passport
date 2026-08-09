@@ -38,3 +38,20 @@ export function getProductItemQrCode(accessToken, itemId) {
     headers: { Accept: 'image/svg+xml' },
   })
 }
+
+/** Load the complete lifecycle history visible to the manufacturer. */
+export function getLifecycleEvents(accessToken, itemId) {
+  return apiRequest(`/api/product-items/${itemId}/lifecycle-events`, {
+    token: accessToken,
+  })
+}
+
+/** Append one event to a published or retired product item. */
+export function createLifecycleEvent(accessToken, itemId, eventData) {
+  return apiRequest(`/api/product-items/${itemId}/lifecycle-events`, {
+    method: 'POST',
+    token: accessToken,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(eventData),
+  })
+}

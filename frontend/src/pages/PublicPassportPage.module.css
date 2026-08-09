@@ -148,6 +148,40 @@
   margin: 0;
 }
 
+.timeline {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  gap: var(--space-4);
+  list-style: none;
+}
+
+.timelineEvent {
+  padding-inline-start: var(--space-4);
+  border-inline-start: 3px solid var(--color-primary);
+}
+
+.eventHeading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.eventHeading h3,
+.timelineEvent p {
+  margin: 0;
+}
+
+.eventHeading time,
+.serviceProvider {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.timelineEvent > p {
+  margin-block-start: var(--space-2);
+}
+
 .publicId {
   margin: 0;
   color: var(--color-text-muted);

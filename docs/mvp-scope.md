@@ -169,7 +169,10 @@ passport values; they may only move to Retired.
 
 ### LifecycleEvent
 
-Represents an event in the lifecycle of a product item, such as manufacturing, installation, maintenance, or repair.
+Represents a dated event in the lifecycle of a product item, such as
+manufacturing, installation, inspection, maintenance, repair, certification,
+or retirement. Each event records its creating user and is either public or
+visible only to the manufacturer.
 
 ### DataCarrier
 

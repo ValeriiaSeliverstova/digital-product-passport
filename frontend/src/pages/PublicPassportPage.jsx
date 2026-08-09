@@ -8,6 +8,11 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'long',
 })
 
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'long',
+  timeStyle: 'short',
+})
+
 const numberFormatter = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 10,
 })
@@ -36,6 +41,15 @@ function formatFieldValue(field) {
   }
 
   return String(field.value)
+}
+
+function formatEventDate(value) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : dateTimeFormatter.format(date)
+}
+
+function formatEventType(value) {
+  return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
 function PublicPassportPage({ publicId }) {
@@ -177,6 +191,40 @@ function PublicPassportPage({ publicId }) {
               ) : (
                 <p className={styles.emptyFields}>
                   No additional public product information is available.
+                </p>
+              )}
+            </section>
+
+            <section className={styles.detailsCard}>
+              <div className={styles.sectionHeading}>
+                <div>
+                  <h2>Product history</h2>
+                  <p>Public maintenance and lifecycle information.</p>
+                </div>
+              </div>
+
+              {passport.lifecycle_events.length > 0 ? (
+                <ol className={styles.timeline}>
+                  {passport.lifecycle_events.map((event) => (
+                    <li className={styles.timelineEvent} key={event.id}>
+                      <div className={styles.eventHeading}>
+                        <h3>{formatEventType(event.event_type)}</h3>
+                        <time dateTime={event.occurred_at}>
+                          {formatEventDate(event.occurred_at)}
+                        </time>
+                      </div>
+                      {event.description && <p>{event.description}</p>}
+                      {event.service_provider && (
+                        <p className={styles.serviceProvider}>
+                          Service provider: {event.service_provider}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className={styles.emptyFields}>
+                  No public lifecycle events are available yet.
                 </p>
               )}
             </section>
