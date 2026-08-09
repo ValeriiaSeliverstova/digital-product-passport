@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 from urllib.parse import urlsplit
 
@@ -83,5 +84,7 @@ class OrganizationResponse(BaseModel):
     contact_email: str | None
     phone: str | None
     website: str | None
+    has_logo: bool
+    logo_updated_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)

@@ -70,6 +70,8 @@ def test_manufacturer_can_update_own_organization(
         "contact_email": "contact@example.com",
         "phone": "+380 00 000 00 00",
         "website": "https://example.com/manufacturer",
+        "has_logo": False,
+        "logo_updated_at": None,
     }
     db_session.refresh(organization)
     db_session.refresh(other_organization)
@@ -77,6 +79,71 @@ def test_manufacturer_can_update_own_organization(
     assert organization.country == "Ukraine"
     assert organization.contact_email == "contact@example.com"
     assert other_organization.name == "Other Organization"
+
+
+def test_manufacturer_can_upload_view_and_delete_logo(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    organization = Organization(name="Logo Organization")
+    user = create_user(
+        db_session,
+        role_name="manufacturer_user",
+        organization=organization,
+    )
+    headers = authorization_header(user)
+    png_data = b"\x89PNG\r\n\x1a\n" + b"test-image-data"
+
+    upload = client.put(
+        "/api/organizations/me/logo",
+        headers=headers,
+        files={"logo": ("logo.png", png_data, "image/png")},
+    )
+
+    assert upload.status_code == 200, upload.text
+    assert upload.json()["has_logo"] is True
+    assert upload.json()["logo_updated_at"] is not None
+
+    image = client.get(f"/api/organizations/{organization.id}/logo")
+    assert image.status_code == 200
+    assert image.headers["content-type"] == "image/png"
+    assert image.content == png_data
+
+    delete = client.delete("/api/organizations/me/logo", headers=headers)
+    assert delete.status_code == 204
+    assert client.get(f"/api/organizations/{organization.id}/logo").status_code == 404
+
+
+def test_logo_upload_validates_image_type_and_size(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    user = create_user(
+        db_session,
+        role_name="manufacturer_user",
+        organization=Organization(name="Logo Organization"),
+    )
+    headers = authorization_header(user)
+
+    invalid_type = client.put(
+        "/api/organizations/me/logo",
+        headers=headers,
+        files={"logo": ("logo.svg", b"<svg></svg>", "image/svg+xml")},
+    )
+    too_large = client.put(
+        "/api/organizations/me/logo",
+        headers=headers,
+        files={
+            "logo": (
+                "logo.png",
+                b"\x89PNG\r\n\x1a\n" + b"x" * (2 * 1024 * 1024),
+                "image/png",
+            ),
+        },
+    )
+
+    assert invalid_type.status_code == 422
+    assert too_large.status_code == 413
 
 
 def test_organization_update_rejects_system_admin(

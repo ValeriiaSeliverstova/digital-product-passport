@@ -33,6 +33,14 @@
   font-size: 0.75rem;
 }
 
+.brandLogo {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  object-fit: contain;
+  border-radius: var(--radius-control);
+}
+
 .account {
   display: flex;
   align-items: center;

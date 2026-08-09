@@ -97,6 +97,8 @@ def test_current_user_response_includes_organization_name(
         "contact_email": None,
         "phone": None,
         "website": None,
+        "has_logo": False,
+        "logo_updated_at": None,
     }
 
 

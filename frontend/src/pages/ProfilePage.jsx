@@ -3,7 +3,12 @@ import { useState } from 'react'
 import AppHeader from '../components/AppHeader.jsx'
 import { ApiError } from '../services/api.js'
 import { changePassword } from '../services/auth.js'
-import { updateCurrentOrganization } from '../services/organizations.js'
+import {
+  deleteOrganizationLogo,
+  organizationLogoUrl,
+  updateCurrentOrganization,
+  uploadOrganizationLogo,
+} from '../services/organizations.js'
 import styles from './ProfilePage.module.css'
 
 const MIN_PASSWORD_LENGTH = 12
@@ -38,6 +43,7 @@ function ProfilePage({
   const [isSavingOrganization, setIsSavingOrganization] = useState(false)
   const [organizationError, setOrganizationError] = useState('')
   const [organizationNotice, setOrganizationNotice] = useState('')
+  const [isUpdatingLogo, setIsUpdatingLogo] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -54,6 +60,61 @@ function ProfilePage({
 
   function updateOrganizationField(field, value) {
     setOrganizationForm((current) => ({ ...current, [field]: value }))
+  }
+
+  async function handleLogoUpload(event) {
+    const logo = event.target.files?.[0]
+    event.target.value = ''
+    if (!logo) return
+
+    setOrganizationError('')
+    setOrganizationNotice('')
+    if (logo.size > 2 * 1024 * 1024) {
+      setOrganizationError('Organization logo must not exceed 2 MB.')
+      return
+    }
+
+    setIsUpdatingLogo(true)
+    try {
+      const organization = await uploadOrganizationLogo(accessToken, logo)
+      onOrganizationUpdated(organization)
+      setOrganizationNotice('Organization logo was updated.')
+    } catch (uploadError) {
+      if (uploadError instanceof ApiError && uploadError.status === 401) {
+        onLogout()
+        return
+      }
+      setOrganizationError(
+        uploadError instanceof ApiError
+          ? uploadError.message
+          : 'Unable to upload the organization logo.',
+      )
+    } finally {
+      setIsUpdatingLogo(false)
+    }
+  }
+
+  async function handleLogoDelete() {
+    setIsUpdatingLogo(true)
+    setOrganizationError('')
+    setOrganizationNotice('')
+    try {
+      await deleteOrganizationLogo(accessToken)
+      onOrganizationUpdated({
+        ...currentUser.organization,
+        has_logo: false,
+        logo_updated_at: null,
+      })
+      setOrganizationNotice('Organization logo was deleted.')
+    } catch (deleteError) {
+      if (deleteError instanceof ApiError && deleteError.status === 401) {
+        onLogout()
+        return
+      }
+      setOrganizationError('Unable to delete the organization logo.')
+    } finally {
+      setIsUpdatingLogo(false)
+    }
   }
 
   async function handleOrganizationUpdate(event) {
@@ -163,10 +224,50 @@ function ProfilePage({
           </dl>
 
           {currentUser.organization ? (
-            <form
-              className={styles.organizationForm}
-              onSubmit={handleOrganizationUpdate}
-            >
+            <>
+              <div className={styles.logoEditor}>
+                {currentUser.organization.has_logo ? (
+                  <img
+                    className={styles.logoPreview}
+                    src={organizationLogoUrl(currentUser.organization)}
+                    alt={`${currentUser.organization.name} logo`}
+                  />
+                ) : (
+                  <span className={styles.logoFallback} aria-hidden="true">
+                    DPP
+                  </span>
+                )}
+                <div>
+                  <h3>Organization logo</h3>
+                  <p>PNG, JPEG, or WebP. Maximum size 2 MB.</p>
+                  <div className={styles.logoActions}>
+                    <label className={styles.logoUploadButton}>
+                      {isUpdatingLogo ? 'Updating…' : 'Choose image'}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleLogoUpload}
+                        disabled={isUpdatingLogo}
+                      />
+                    </label>
+                    {currentUser.organization.has_logo && (
+                      <button
+                        className={styles.logoDeleteButton}
+                        type="button"
+                        onClick={handleLogoDelete}
+                        disabled={isUpdatingLogo}
+                      >
+                        Delete logo
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <form
+                className={styles.organizationForm}
+                onSubmit={handleOrganizationUpdate}
+              >
               <div className={`${styles.field} ${styles.fullWidthField}`}>
                 <label htmlFor="organization-name">Organization name</label>
                 <input
@@ -316,7 +417,8 @@ function ProfilePage({
               >
                 {isSavingOrganization ? 'Saving…' : 'Save organization details'}
               </button>
-            </form>
+              </form>
+            </>
           ) : (
             <p className={styles.unassignedOrganization}>
               No organization is assigned to this account.

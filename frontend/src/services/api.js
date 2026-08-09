@@ -3,6 +3,11 @@ const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replac
   '',
 )
 
+/** Build a URL for browser-loaded resources such as organization logos. */
+export function apiUrl(path) {
+  return `${API_URL}${path}`
+}
+
 export class ApiError extends Error {
   constructor(status, message) {
     super(message)

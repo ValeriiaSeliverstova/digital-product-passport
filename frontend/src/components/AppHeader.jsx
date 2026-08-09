@@ -1,4 +1,5 @@
 import styles from './AppHeader.module.css'
+import { organizationLogoUrl } from '../services/organizations.js'
 
 const navigationItems = [
   { id: 'profile', label: 'Profile' },
@@ -8,13 +9,21 @@ const navigationItems = [
 ]
 
 function AppHeader({ currentSection, currentUser, onLogout, onNavigate }) {
+  const logoUrl = organizationLogoUrl(currentUser.organization)
+
   return (
     <header className={styles.header}>
       <div className={styles.topRow}>
         <div className={styles.brand}>
-          <span className={styles.brandMark} aria-hidden="true">
-            DPP
-          </span>
+          {logoUrl ? (
+            <img
+              className={styles.brandLogo}
+              src={logoUrl}
+              alt={`${currentUser.organization.name} logo`}
+            />
+          ) : (
+            <span className={styles.brandMark} aria-hidden="true">DPP</span>
+          )}
           <span>Digital Product Passport</span>
         </div>
 
