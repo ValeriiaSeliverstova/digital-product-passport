@@ -36,3 +36,6 @@ page and repeatable SVG QR-code generation for printed labels.
 ## Security
 
 Only fictional or anonymized data will be used. No confidential company, customer, or security-related information will be stored in this repository.
+
+Operational cleanup is documented in the
+[project shutdown checklist](docs/project-shutdown-checklist.md).
