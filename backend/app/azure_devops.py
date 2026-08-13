@@ -351,9 +351,23 @@ def _build_description(**values: str) -> str:
 class _PlainTextParser(HTMLParser):
     """Extract readable text without rendering Azure-provided HTML."""
 
+    BLOCK_TAGS = {"div", "li", "p"}
+
     def __init__(self) -> None:
         super().__init__()
         self.parts: list[str] = []
+
+    def handle_starttag(
+        self,
+        tag: str,
+        attrs: list[tuple[str, str | None]],
+    ) -> None:
+        if tag == "br" or tag in self.BLOCK_TAGS:
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self.BLOCK_TAGS:
+            self.parts.append("\n")
 
     def handle_data(self, data: str) -> None:
         self.parts.append(data)

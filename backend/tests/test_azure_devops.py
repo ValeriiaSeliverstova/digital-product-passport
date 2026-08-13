@@ -197,7 +197,10 @@ def test_customer_safe_comment_requires_tag_and_hides_azure_identity() -> None:
     result = customer_safe_comment(
         {
             "id": 5,
-            "text": "<p>@customer Hello <strong>customer</strong>.</p>",
+            "text": (
+                "<div>@customer</div>"
+                "<div>Hello <strong>customer</strong>.<br>Please update.</div>"
+            ),
             "createdDate": "2026-08-13T14:00:00Z",
             "createdBy": {"displayName": "Private Engineer Name"},
         },
@@ -206,7 +209,7 @@ def test_customer_safe_comment_requires_tag_and_hides_azure_identity() -> None:
     assert result == {
         "id": 5,
         "author": "Support",
-        "message": "Hello customer.",
+        "message": "Hello customer.\nPlease update.",
         "created_at": "2026-08-13T14:00:00Z",
     }
 
