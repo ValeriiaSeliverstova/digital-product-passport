@@ -33,3 +33,17 @@ def test_unknown_frontend_origin_is_not_allowed(client: TestClient) -> None:
     )
 
     assert "access-control-allow-origin" not in response.headers
+
+
+def test_support_ticket_idempotency_header_is_allowed(client: TestClient) -> None:
+    response = client.options(
+        "/api/passports/00000000-0000-0000-0000-000000000000/support-tickets",
+        headers={
+            "Origin": settings.frontend_origin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "Content-Type, Idempotency-Key",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "Idempotency-Key" in response.headers["access-control-allow-headers"]

@@ -5,7 +5,7 @@ import json
 from pydantic import SecretStr
 from pytest import MonkeyPatch
 
-from app.azure_devops import create_support_work_item
+from app.azure_devops import create_support_work_item, get_support_work_item
 from app.config import settings
 
 
@@ -61,3 +61,39 @@ def test_azure_devops_request_uses_pat_and_escaped_json_patch(
     assert captured["timeout"] == 10
     assert ticket_id == 91
     assert ticket_url == "https://dev.azure.com/ticket/91"
+
+
+def test_get_support_work_item_requests_only_customer_status_fields(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+    response = io.BytesIO(
+        json.dumps(
+            {
+                "id": 91,
+                "fields": {
+                    "System.State": "Active",
+                    "System.CreatedDate": "2026-08-13T12:00:00Z",
+                    "System.ChangedDate": "2026-08-13T14:30:00Z",
+                },
+            },
+        ).encode(),
+    )
+
+    def fake_urlopen(request: object, timeout: int) -> io.BytesIO:
+        captured["request"] = request
+        captured["timeout"] = timeout
+        return response
+
+    monkeypatch.setattr(settings, "azure_devops_pat", SecretStr("test-pat-value"))
+    monkeypatch.setattr("app.azure_devops.urlopen", fake_urlopen)
+
+    result = get_support_work_item(91)
+
+    request = captured["request"]
+    assert request.method == "GET"
+    assert "/_apis/wit/workitems/91?fields=" in request.full_url
+    assert "System.State" in request.full_url
+    assert "System.Description" not in request.full_url
+    assert result["System.State"] == "Active"
+    assert captured["timeout"] == 10

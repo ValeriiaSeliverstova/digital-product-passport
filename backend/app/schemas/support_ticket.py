@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -15,7 +17,12 @@ class SupportTicketCreate(BaseModel):
         """Apply the same lightweight email validation used by profiles."""
 
         local_part, separator, domain = value.partition("@")
-        if not separator or not local_part or "." not in domain:
+        if (
+            not separator
+            or not local_part
+            or "." not in domain
+            or any(character.isspace() for character in value)
+        ):
             raise ValueError("Enter a valid email address")
         return value.lower()
 
@@ -26,4 +33,21 @@ class SupportTicketResponse(BaseModel):
     """Safe Azure DevOps identifiers returned after ticket creation."""
 
     ticket_id: int
-    ticket_url: str | None
+
+
+class SupportTicketTrackRequest(BaseModel):
+    """Private code sent to the customer after ticket creation."""
+
+    tracking_code: str = Field(min_length=16, max_length=64)
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+
+class SupportTicketStatusResponse(BaseModel):
+    """Small customer-safe status view derived from Azure DevOps."""
+
+    ticket_id: int
+    subject: str
+    status: str
+    submitted_at: datetime
+    updated_at: datetime | None

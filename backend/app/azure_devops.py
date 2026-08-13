@@ -16,6 +16,16 @@ class AzureDevOpsRequestError(RuntimeError):
     """Azure DevOps rejected or could not complete a work-item request."""
 
 
+def _authorization_header() -> str:
+    """Build the Basic authorization value without exposing the PAT."""
+
+    if settings.azure_devops_pat is None:
+        raise AzureDevOpsNotConfiguredError
+    pat = settings.azure_devops_pat.get_secret_value()
+    encoded = base64.b64encode(f":{pat}".encode()).decode()
+    return f"Basic {encoded}"
+
+
 def support_ticket_is_enabled(
     area_path: str | None,
     work_item_type: str,
@@ -50,8 +60,6 @@ def create_support_work_item(
     if area_path is None or not work_item_type or settings.azure_devops_pat is None:
         raise AzureDevOpsNotConfiguredError
 
-    pat = settings.azure_devops_pat.get_secret_value()
-    authorization = base64.b64encode(f":{pat}".encode()).decode()
     encoded_work_item_type = quote(work_item_type, safe="")
     url = (
         f"{settings.azure_devops_project_url}/_apis/wit/workitems/"
@@ -88,7 +96,7 @@ def create_support_work_item(
         data=json.dumps(patch_document).encode(),
         headers={
             "Accept": "application/json",
-            "Authorization": f"Basic {authorization}",
+            "Authorization": _authorization_header(),
             "Content-Type": "application/json-patch+json",
         },
         method="POST",
@@ -108,6 +116,37 @@ def create_support_work_item(
     if not isinstance(ticket_url, str):
         ticket_url = None
     return ticket_id, ticket_url
+
+
+def get_support_work_item(ticket_id: int) -> dict[str, object]:
+    """Load the small Azure field subset used by the customer tracking page."""
+
+    fields = quote(
+        "System.State,System.CreatedDate,System.ChangedDate",
+        safe=",",
+    )
+    url = (
+        f"{settings.azure_devops_project_url}/_apis/wit/workitems/{ticket_id}"
+        f"?fields={fields}&api-version=7.1"
+    )
+    request = Request(
+        url,
+        headers={
+            "Accept": "application/json",
+            "Authorization": _authorization_header(),
+        },
+        method="GET",
+    )
+    try:
+        with urlopen(request, timeout=10) as response:
+            result = json.load(response)
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as error:
+        raise AzureDevOpsRequestError from error
+
+    fields_result = result.get("fields")
+    if not isinstance(fields_result, dict):
+        raise AzureDevOpsRequestError
+    return fields_result
 
 
 def _build_description(**values: str) -> str:

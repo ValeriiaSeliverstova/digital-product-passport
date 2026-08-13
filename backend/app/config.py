@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     azure_devops_pat: SecretStr | None = None
     azure_devops_project_url: str = "https://dev.azure.com/what-software/Students"
 
+    smtp_host: str = "smtp.ukr.net"
+    smtp_port: int = Field(default=465, ge=1, le=65535)
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_from_email: str | None = None
+
     @field_validator("jwt_secret_key")
     @classmethod
     def validate_jwt_secret_key(cls, value: SecretStr) -> SecretStr:
@@ -45,10 +51,16 @@ class Settings(BaseSettings):
             raise ValueError("JWT_SECRET_KEY must contain at least 32 characters")
         return value
 
-    @field_validator("azure_devops_pat", mode="before")
+    @field_validator(
+        "azure_devops_pat",
+        "smtp_username",
+        "smtp_password",
+        "smtp_from_email",
+        mode="before",
+    )
     @classmethod
-    def empty_azure_devops_pat_is_none(cls, value: object) -> object:
-        """Treat an empty optional PAT setting as an unconfigured integration."""
+    def empty_optional_secret_setting_is_none(cls, value: object) -> object:
+        """Treat empty optional integration settings as unconfigured."""
 
         if isinstance(value, str) and not value.strip():
             return None

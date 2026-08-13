@@ -1,0 +1,126 @@
+.page {
+  min-height: 100vh;
+}
+
+.header {
+  min-height: 4.5rem;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.brand {
+  display: flex;
+  max-width: var(--content-max-width);
+  min-height: 3rem;
+  margin-inline: auto;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: var(--font-weight-bold);
+}
+
+.brandMark {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border-radius: 50%;
+  font-size: var(--font-size-small);
+}
+
+.main {
+  max-width: var(--form-max-width);
+  margin-inline: auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.card {
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-dialog);
+}
+
+.card h1,
+.introduction,
+.result h2,
+.result dl {
+  margin: 0;
+}
+
+.introduction {
+  margin-block-start: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.form {
+  display: grid;
+  margin-block-start: var(--space-6);
+  gap: var(--space-2);
+}
+
+.form button {
+  min-height: 2.75rem;
+  margin-block-start: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  justify-self: start;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.error {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-3);
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-radius: var(--radius-control);
+}
+
+.result {
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.resultHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.resultHeading span {
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-info);
+  background: var(--color-info-bg);
+  border-radius: 999px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.result dl {
+  display: grid;
+  margin-block-start: var(--space-4);
+}
+
+.result dl div {
+  display: grid;
+  padding-block: var(--space-3);
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.result dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+.result dd {
+  margin: 0;
+}

@@ -9,6 +9,7 @@ import ProductItemListPage from './pages/ProductItemListPage.jsx'
 import ProductModelFormPage from './pages/ProductModelFormPage.jsx'
 import ProductModelListPage from './pages/ProductModelListPage.jsx'
 import PublicPassportPage from './pages/PublicPassportPage.jsx'
+import PublicSupportTicketPage from './pages/PublicSupportTicketPage.jsx'
 import TemplateListPage from './pages/TemplateListPage.jsx'
 import { getCurrentUser, login } from './services/auth.js'
 import { ApiError } from './services/api.js'
@@ -25,6 +26,13 @@ function App() {
     /^\/passport\/([^/]+)\/?$/,
   )
   const publicPassportId = publicPassportMatch?.[1]
+  const publicSupportTicketMatch = window.location.pathname.match(
+    /^\/support-ticket\/(\d+)\/?$/,
+  )
+  const publicSupportTicketId = publicSupportTicketMatch?.[1]
+  const isPublicSupportTracker = /^\/support-ticket\/?$/.test(
+    window.location.pathname,
+  )
 
   async function handleLogin(email, password) {
     try {
@@ -77,6 +85,10 @@ function App() {
   // Public QR links bypass the manufacturer sign-in screen.
   if (publicPassportId) {
     return <PublicPassportPage publicId={publicPassportId} />
+  }
+
+  if (publicSupportTicketId || isPublicSupportTracker) {
+    return <PublicSupportTicketPage ticketId={publicSupportTicketId} />
   }
 
   if (!accessToken || !currentUser) {

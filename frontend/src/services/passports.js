@@ -6,12 +6,15 @@ export function getPublicPassport(publicId) {
 }
 
 /** Submit a customer-support request for one published passport. */
-export function submitSupportTicket(publicId, ticket) {
+export function submitSupportTicket(publicId, ticket, idempotencyKey) {
   return apiRequest(
     `/api/passports/${encodeURIComponent(publicId)}/support-tickets`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
       body: JSON.stringify(ticket),
     },
   )

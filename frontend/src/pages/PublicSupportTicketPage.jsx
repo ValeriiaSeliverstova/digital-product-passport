@@ -1,0 +1,122 @@
+import { useState } from 'react'
+
+import { ApiError } from '../services/api.js'
+import { trackSupportTicket } from '../services/supportTickets.js'
+import styles from './PublicSupportTicketPage.module.css'
+
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'long',
+  timeStyle: 'short',
+})
+
+function formatDateTime(value) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : dateTimeFormatter.format(date)
+}
+
+function PublicSupportTicketPage({ ticketId }) {
+  const [ticketNumber, setTicketNumber] = useState(ticketId || '')
+  const [trackingCode, setTrackingCode] = useState('')
+  const [ticket, setTicket] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setIsLoading(true)
+    setError('')
+
+    try {
+      setTicket(
+        await trackSupportTicket(ticketNumber.trim(), trackingCode.trim()),
+      )
+    } catch (requestError) {
+      setTicket(null)
+      setError(
+        requestError instanceof ApiError && requestError.status === 404
+          ? 'The ticket number or tracking code is incorrect.'
+          : 'The ticket status could not be loaded. Please try again.',
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <div className={styles.brand}>
+          <span className={styles.brandMark} aria-hidden="true">DPP</span>
+          <span>Digital Product Passport</span>
+        </div>
+      </header>
+
+      <main className={styles.main}>
+        <section className={styles.card}>
+          <h1>
+            {ticketId ? `Track support ticket #${ticketId}` : 'Track a support ticket'}
+          </h1>
+          <p className={styles.introduction}>
+            Enter the ticket details sent to your email address.
+          </p>
+
+          <form className={styles.form} onSubmit={handleSubmit}>
+            {!ticketId && (
+              <>
+                <label htmlFor="ticket-number">Ticket number</label>
+                <input
+                  id="ticket-number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]+"
+                  maxLength={10}
+                  placeholder="For example, 991"
+                  value={ticketNumber}
+                  onChange={(event) => setTicketNumber(event.target.value)}
+                  required
+                />
+              </>
+            )}
+            <label htmlFor="tracking-code">Tracking code</label>
+            <input
+              id="tracking-code"
+              autoComplete="one-time-code"
+              minLength={16}
+              maxLength={64}
+              value={trackingCode}
+              onChange={(event) => setTrackingCode(event.target.value)}
+              required
+            />
+            {error && <p className={styles.error} role="alert">{error}</p>}
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? 'Loading…' : 'View ticket status'}
+            </button>
+          </form>
+
+          {ticket && (
+            <div className={styles.result} role="status">
+              <div className={styles.resultHeading}>
+                <h2>{ticket.subject}</h2>
+                <span>{ticket.status}</span>
+              </div>
+              <dl>
+                <div>
+                  <dt>Submitted</dt>
+                  <dd>{formatDateTime(ticket.submitted_at)}</dd>
+                </div>
+                {ticket.updated_at && (
+                  <div>
+                    <dt>Last updated</dt>
+                    <dd>{formatDateTime(ticket.updated_at)}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  )
+}
+
+export default PublicSupportTicketPage

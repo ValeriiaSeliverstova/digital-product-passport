@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { ApiError, apiUrl } from '../services/api.js'
 import {
@@ -120,8 +120,11 @@ function PublicPassportPage({ publicId }) {
   const [ticketState, setTicketState] = useState('idle')
   const [ticketError, setTicketError] = useState('')
   const [createdTicket, setCreatedTicket] = useState(null)
+  const ticketIdempotencyKey = useRef(null)
 
   function updateTicketField(field, value) {
+    // Edited ticket data represents a new request and receives a new key.
+    ticketIdempotencyKey.current = null
     setTicketForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -131,7 +134,12 @@ function PublicPassportPage({ publicId }) {
     setTicketError('')
 
     try {
-      const result = await submitSupportTicket(publicId, ticketForm)
+      ticketIdempotencyKey.current ||= crypto.randomUUID()
+      const result = await submitSupportTicket(
+        publicId,
+        ticketForm,
+        ticketIdempotencyKey.current,
+      )
       setCreatedTicket(result)
       setTicketState('success')
     } catch (error) {
@@ -386,19 +394,28 @@ function PublicPassportPage({ publicId }) {
                     </a>
                   )}
                   {passport.support_ticket_enabled && (
-                    <button
-                      className={styles.supportLink}
-                      type="button"
-                      onClick={() => setShowTicketForm((visible) => !visible)}
-                      aria-expanded={showTicketForm}
-                      aria-controls="support-ticket-form"
-                    >
-                      <SupportIcon type="ticket" />
-                      <span className={styles.supportText}>
-                        <strong>Submit a ticket</strong>
-                        <span>Send product details with your request</span>
-                      </span>
-                    </button>
+                    <>
+                      <button
+                        className={styles.supportLink}
+                        type="button"
+                        onClick={() => setShowTicketForm((visible) => !visible)}
+                        aria-expanded={showTicketForm}
+                        aria-controls="support-ticket-form"
+                      >
+                        <SupportIcon type="ticket" />
+                        <span className={styles.supportText}>
+                          <strong>Submit a ticket</strong>
+                          <span>Send product details with your request</span>
+                        </span>
+                      </button>
+                      <a className={styles.supportLink} href="/support-ticket">
+                        <SupportIcon type="ticket" />
+                        <span className={styles.supportText}>
+                          <strong>Track a ticket</strong>
+                          <span>Use your ticket number and private code</span>
+                        </span>
+                      </a>
+                    </>
                   )}
                 </div>
 
@@ -411,16 +428,10 @@ function PublicPassportPage({ publicId }) {
                     {ticketState === 'success' ? (
                       <div className={styles.ticketSuccess} role="status">
                         <strong>Support ticket #{createdTicket.ticket_id} was submitted.</strong>
-                        <span>{passport.manufacturer_name} can now review your request.</span>
-                        {createdTicket.ticket_url && (
-                          <a
-                            href={createdTicket.ticket_url}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            View ticket in Azure DevOps
-                          </a>
-                        )}
+                        <span>
+                          {passport.manufacturer_name} can now review your request.
+                          Tracking instructions were sent to your email.
+                        </span>
                       </div>
                     ) : (
                       <>

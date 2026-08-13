@@ -8,6 +8,7 @@ from app.routers.categories import router as categories_router
 from app.routers.lifecycle_events import router as lifecycle_events_router
 from app.routers.organizations import router as organizations_router
 from app.routers.passports import router as passports_router
+from app.routers.support_tickets import router as support_tickets_router
 from app.routers.product_items import router as product_items_router
 from app.routers.product_models import router as product_models_router
 from app.routers.templates import router as templates_router
@@ -21,7 +22,7 @@ app.add_middleware(
     allow_origins=[settings.frontend_origin],
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
 )
 
 app.include_router(auth_router)
@@ -30,6 +31,7 @@ app.include_router(categories_router)
 app.include_router(lifecycle_events_router)
 app.include_router(organizations_router)
 app.include_router(passports_router)
+app.include_router(support_tickets_router)
 app.include_router(product_items_router)
 app.include_router(product_models_router)
 app.include_router(templates_router)

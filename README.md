@@ -31,7 +31,8 @@ The MVP backend includes authentication, product categories, configurable and
 versioned passport templates, product models, physical product items, and a
 public passport API. The React frontend supports the manufacturer workflows for
 templates, product models, and product items, together with the public passport
-page and repeatable SVG QR-code generation for printed labels.
+page, Azure DevOps support-ticket submission and private email-code tracking,
+and repeatable SVG QR-code generation for printed labels.
 
 ## Security
 
