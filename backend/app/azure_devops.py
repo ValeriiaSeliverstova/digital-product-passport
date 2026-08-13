@@ -1,5 +1,6 @@
 import base64
 import json
+import re
 from html import escape
 from html.parser import HTMLParser
 from urllib.error import HTTPError, URLError
@@ -18,6 +19,7 @@ class AzureDevOpsRequestError(RuntimeError):
 
 
 CUSTOMER_COMMENT_PREFIX = "**Customer reply via DPP:**\n\n"
+SUPPORT_COMMENT_TAG = "@customer"
 
 
 def _authorization_header() -> str:
@@ -215,7 +217,7 @@ def add_support_work_item_comment(*, ticket_id: int, message: str) -> None:
 
 
 def customer_safe_comment(comment: dict[str, object]) -> dict[str, object] | None:
-    """Reduce one Azure comment to plain text and a generic public author."""
+    """Expose customer replies and only explicitly tagged support comments."""
 
     text = comment.get("text")
     created_at = comment.get("createdDate")
@@ -227,6 +229,15 @@ def customer_safe_comment(comment: dict[str, object]) -> dict[str, object] | Non
     if is_customer:
         text = text.removeprefix(CUSTOMER_COMMENT_PREFIX)
     text = _plain_text(text).strip()
+    if not is_customer:
+        tagged_comment = re.fullmatch(
+            rf"{re.escape(SUPPORT_COMMENT_TAG)}\b[\s:,-]*(.*)",
+            text,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        if tagged_comment is None:
+            return None
+        text = tagged_comment.group(1).strip()
     if not text:
         return None
     return {

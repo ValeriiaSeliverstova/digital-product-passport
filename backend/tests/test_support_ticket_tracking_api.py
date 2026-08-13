@@ -49,8 +49,13 @@ def test_customer_can_track_ticket_with_correct_code(
         lambda _ticket_id: [
             {
                 "id": 10,
-                "text": "Engineer response",
+                "text": "@customer Engineer response",
                 "createdDate": "2026-08-13T14:00:00Z",
+            },
+            {
+                "id": 12,
+                "text": "Internal engineer note",
+                "createdDate": "2026-08-13T14:10:00Z",
             },
             {
                 "id": 11,

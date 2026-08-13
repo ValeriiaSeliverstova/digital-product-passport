@@ -193,11 +193,11 @@ def test_get_and_add_work_item_comments(monkeypatch: MonkeyPatch) -> None:
     }
 
 
-def test_customer_safe_comment_removes_html_and_hides_azure_identity() -> None:
+def test_customer_safe_comment_requires_tag_and_hides_azure_identity() -> None:
     result = customer_safe_comment(
         {
             "id": 5,
-            "text": "<p>Hello <strong>customer</strong>.</p>",
+            "text": "<p>@customer Hello <strong>customer</strong>.</p>",
             "createdDate": "2026-08-13T14:00:00Z",
             "createdBy": {"displayName": "Private Engineer Name"},
         },
@@ -209,3 +209,11 @@ def test_customer_safe_comment_removes_html_and_hides_azure_identity() -> None:
         "message": "Hello customer.",
         "created_at": "2026-08-13T14:00:00Z",
     }
+
+    assert customer_safe_comment(
+        {
+            "id": 6,
+            "text": "Internal note: do not expose this",
+            "createdDate": "2026-08-13T14:10:00Z",
+        },
+    ) is None

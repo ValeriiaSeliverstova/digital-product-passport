@@ -155,8 +155,8 @@ function PublicSupportTicketPage({ ticketId }) {
                 <h3>Conversation</h3>
                 {ticket.comments.length === 0 ? (
                   <p className={styles.emptyConversation}>
-                    No replies yet. Support comments added in Azure DevOps will
-                    appear here after refresh.
+                    No replies yet. Support comments tagged with @customer in
+                    Azure DevOps will appear here after refresh.
                   </p>
                 ) : (
                   <ol className={styles.commentList}>
