@@ -14,6 +14,7 @@ from app.security import decode_access_token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 MANUFACTURER_ROLE = "manufacturer_user"
+SERVICE_TECHNICIAN_ROLE = "service_technician"
 SYSTEM_ADMIN_ROLE = "system_admin"
 
 
@@ -67,6 +68,21 @@ def require_manufacturer(
 
     if (
         current_user.role.name != MANUFACTURER_ROLE
+        or current_user.organization_id is None
+    ):
+        raise authorization_error()
+
+    return current_user
+
+
+def require_product_item_member(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> User:
+    """Allow organization administrators and service technicians."""
+
+    if (
+        current_user.role.name
+        not in {MANUFACTURER_ROLE, SERVICE_TECHNICIAN_ROLE}
         or current_user.organization_id is None
     ):
         raise authorization_error()

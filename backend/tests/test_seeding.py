@@ -34,7 +34,7 @@ def test_reference_seed_is_idempotent(db_session: Session) -> None:
         select(func.count()).select_from(TemplateField),
     )
 
-    assert role_count == 2
+    assert role_count == 3
     assert organization_count == 1
     assert category_count == 5
     assert template_count == 1

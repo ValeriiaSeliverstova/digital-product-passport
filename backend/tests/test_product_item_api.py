@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
 from pytest import MonkeyPatch
@@ -9,6 +9,7 @@ from app.models import (
     Organization,
     PassportTemplate,
     ProductCategory,
+    ProductItem,
     ProductModel,
     Role,
     TemplateField,
@@ -153,6 +154,48 @@ def test_product_item_is_created_as_owned_draft(
     assert result["status"] == "draft"
     assert result["public_id"]
     assert result["passport_data"]["weight_kg"] == 55.5
+
+
+def test_technician_can_register_and_publish_but_not_retire_product(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    administrator, _ = create_manufacturer(db_session, "Manufacturer A")
+    product_model = create_product_model(db_session, administrator)
+    technician_role = Role(name="service_technician")
+    technician = User(
+        email="technician@example.com",
+        password_hash="not-used-by-product-item-api-tests",
+        status="active",
+        role=technician_role,
+        organization_id=administrator.organization_id,
+    )
+    db_session.add(technician)
+    db_session.commit()
+    headers = {
+        "Authorization": f"Bearer {create_access_token(technician.id)}",
+    }
+
+    created = create_item_through_api(client, headers, product_model)
+    stored_item = db_session.scalar(
+        select(ProductItem).where(ProductItem.id == UUID(created["id"])),
+    )
+    assert stored_item is not None
+    assert stored_item.created_by_user_id == technician.id
+
+    published = client.put(
+        f"/api/product-items/{created['id']}",
+        headers=headers,
+        json={"status": "published"},
+    )
+    retired = client.put(
+        f"/api/product-items/{created['id']}",
+        headers=headers,
+        json={"status": "retired"},
+    )
+
+    assert published.status_code == 200
+    assert retired.status_code == 403
 
 
 def test_product_item_rejects_invalid_passport_data(

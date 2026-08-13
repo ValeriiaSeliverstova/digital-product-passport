@@ -1,15 +1,25 @@
 import styles from './AppHeader.module.css'
 import { organizationLogoUrl } from '../services/organizations.js'
 
-const navigationItems = [
+const administratorNavigation = [
   { id: 'profile', label: 'Profile' },
   { id: 'templates', label: 'Templates' },
   { id: 'product-models', label: 'Product models' },
   { id: 'product-items', label: 'Product items' },
+  { id: 'team-members', label: 'Team members' },
+]
+
+const technicianNavigation = [
+  { id: 'product-items', label: 'Product items' },
+  { id: 'profile', label: 'Account' },
 ]
 
 function AppHeader({ currentSection, currentUser, onLogout, onNavigate }) {
   const logoUrl = organizationLogoUrl(currentUser.organization)
+  const isTechnician = currentUser.role.name === 'service_technician'
+  const navigationItems = isTechnician
+    ? technicianNavigation
+    : administratorNavigation
 
   return (
     <header className={styles.header}>
@@ -37,7 +47,7 @@ function AppHeader({ currentSection, currentUser, onLogout, onNavigate }) {
         </div>
       </div>
 
-      <nav className={styles.navigation} aria-label="Manufacturer navigation">
+      <nav className={styles.navigation} aria-label="Organization navigation">
         {navigationItems.map((item) => (
           <button
             className={styles.navigationButton}

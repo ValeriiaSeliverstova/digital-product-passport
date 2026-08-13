@@ -14,7 +14,7 @@ from app.models import (
 from app.schemas.template_field import TemplateFieldCreate
 
 
-ROLE_NAMES = ("system_admin", "manufacturer_user")
+ROLE_NAMES = ("system_admin", "manufacturer_user", "service_technician")
 ORGANIZATION_NAME = "KhersonSafe Ltd."
 LEGACY_ORGANIZATION_NAME = "KersonSafe Ltd."
 TEMPLATE_NAME = "KhersonSafe Standard Passport"

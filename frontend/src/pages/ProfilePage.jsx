@@ -39,6 +39,7 @@ function ProfilePage({
   onNavigate,
   onOrganizationUpdated,
 }) {
+  const isOrganizationAdmin = currentUser.role.name === 'manufacturer_user'
   const [organizationForm, setOrganizationForm] = useState(
     organizationFormValues(currentUser.organization),
   )
@@ -212,8 +213,12 @@ function ProfilePage({
 
       <main className={styles.main}>
         <div className={styles.heading}>
-          <h1>Profile</h1>
-          <p>Review your organization, account information, and password.</p>
+          <h1>{isOrganizationAdmin ? 'Profile' : 'Account'}</h1>
+          <p>
+            {isOrganizationAdmin
+              ? 'Review your organization, account information, and password.'
+              : 'Review your account information and change your password.'}
+          </p>
         </div>
 
         <section className={styles.card} aria-labelledby="account-heading">
@@ -223,9 +228,21 @@ function ProfilePage({
               <dt>Email</dt>
               <dd>{currentUser.email}</dd>
             </div>
+            <div>
+              <dt>Role</dt>
+              <dd>
+                {isOrganizationAdmin
+                  ? 'Organization administrator'
+                  : 'Service technician'}
+              </dd>
+            </div>
+            <div>
+              <dt>Organization</dt>
+              <dd>{currentUser.organization?.name || 'Not assigned'}</dd>
+            </div>
           </dl>
 
-          {currentUser.organization ? (
+          {isOrganizationAdmin && (currentUser.organization ? (
             <>
               <div className={styles.logoEditor}>
                 {currentUser.organization.has_logo ? (
@@ -470,7 +487,7 @@ function ProfilePage({
             <p className={styles.unassignedOrganization}>
               No organization is assigned to this account.
             </p>
-          )}
+          ))}
         </section>
 
         <section className={styles.card} aria-labelledby="password-heading">

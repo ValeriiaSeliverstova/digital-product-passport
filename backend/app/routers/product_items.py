@@ -9,7 +9,10 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import settings
 from app.database import get_db
-from app.dependencies.auth import require_manufacturer
+from app.dependencies.auth import (
+    MANUFACTURER_ROLE,
+    require_product_item_member,
+)
 from app.models import (
     PassportTemplate,
     ProductItem,
@@ -32,7 +35,7 @@ from app.schemas.product_item import (
 router = APIRouter(prefix="/api/product-items", tags=["product items"])
 
 DatabaseSession = Annotated[Session, Depends(get_db)]
-Manufacturer = Annotated[User, Depends(require_manufacturer)]
+ProductItemMember = Annotated[User, Depends(require_product_item_member)]
 
 
 @router.post(
@@ -43,7 +46,7 @@ Manufacturer = Annotated[User, Depends(require_manufacturer)]
 def create_product_item(
     data: ProductItemCreate,
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> ProductItem:
     """Register one physical product as a draft passport."""
 
@@ -70,6 +73,7 @@ def create_product_item(
     product_item = ProductItem(
         organization_id=current_user.organization_id,
         model_id=product_model.id,
+        created_by_user_id=current_user.id,
         serial_number=data.serial_number,
         manufacture_date=data.manufacture_date,
         passport_data=data.passport_data,
@@ -87,7 +91,7 @@ def create_product_item(
 @router.get("", response_model=ProductItemPage)
 def list_product_items(
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
     search: Annotated[str | None, Query(min_length=1, max_length=255)] = None,
     item_status: ProductItemStatus | None = Query(default=None, alias="status"),
     manufactured_from: date | None = None,
@@ -170,7 +174,7 @@ def list_product_items(
 def get_product_item(
     item_id: UUID,
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> ProductItem:
     """Return one product item owned by the current manufacturer."""
 
@@ -194,7 +198,7 @@ def get_product_item(
 def get_product_item_qr_code(
     item_id: UUID,
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> Response:
     """Generate a printable QR code for an owned published product item."""
 
@@ -227,7 +231,7 @@ def update_product_item(
     item_id: UUID,
     data: ProductItemUpdate,
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> ProductItem:
     """Edit a draft, publish it, or retire a published product item."""
 
@@ -241,6 +245,12 @@ def update_product_item(
 
     if product_item.status == "retired":
         raise item_state_error("Retired product items cannot be changed")
+
+    if data.status == "retired" and current_user.role.name != MANUFACTURER_ROLE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only an organization administrator can retire a product item",
+        )
 
     if product_item.status == "published":
         if set(changes) != {"status"} or data.status != "retired":

@@ -34,9 +34,9 @@ function LoginPage({ onLogin }) {
 
       <main className={styles.main}>
         <section className={styles.card} aria-labelledby="login-title">
-          <h1 id="login-title">Manufacturer sign in</h1>
+          <h1 id="login-title">Organization sign in</h1>
           <p className={styles.introduction}>
-            Secure access for registered manufacturers
+            Secure access for administrators and service technicians
           </p>
 
           <form className={styles.form} onSubmit={handleSubmit}>
