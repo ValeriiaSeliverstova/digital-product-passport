@@ -41,9 +41,9 @@ def create_user(
         raise ValueError("Role not found; run the reference-data seed first")
 
     organization = None
-    if role_name == "manufacturer_user":
+    if role_name in {"manufacturer_user", "service_technician"}:
         if not organization_name:
-            raise ValueError("Manufacturer users require an organization")
+            raise ValueError("Organization users require an organization")
 
         organization = db.scalar(
             select(Organization).where(Organization.name == organization_name),
@@ -103,7 +103,7 @@ def main() -> None:
     role_name = input("Role [manufacturer_user]: ").strip() or "manufacturer_user"
 
     organization_name = None
-    if role_name == "manufacturer_user":
+    if role_name in {"manufacturer_user", "service_technician"}:
         organization_name = (
             input(f"Organization [{ORGANIZATION_NAME}]: ").strip()
             or ORGANIZATION_NAME

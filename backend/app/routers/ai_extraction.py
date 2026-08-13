@@ -12,7 +12,7 @@ from app.ai_extraction import (
     extract_document,
 )
 from app.database import get_db
-from app.dependencies.auth import require_manufacturer
+from app.dependencies.auth import require_product_item_member
 from app.models import PassportTemplate, ProductModel, User
 from app.schemas.ai_extraction import AiExtractionResponse
 
@@ -20,14 +20,14 @@ from app.schemas.ai_extraction import AiExtractionResponse
 router = APIRouter(prefix="/api/product-models", tags=["AI extraction"])
 
 DatabaseSession = Annotated[Session, Depends(get_db)]
-Manufacturer = Annotated[User, Depends(require_manufacturer)]
+ProductItemMember = Annotated[User, Depends(require_product_item_member)]
 
 
 @router.post("/{model_id}/ai-extraction", response_model=AiExtractionResponse)
 def extract_product_data(
     model_id: UUID,
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
     document: Annotated[UploadFile, File()],
 ) -> AiExtractionResponse:
     """Extract reviewable suggestions for an owned product model."""

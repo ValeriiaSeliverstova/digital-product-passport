@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import require_manufacturer
+from app.dependencies.auth import require_product_item_member
 from app.models import LifecycleEvent, ProductItem, User
 from app.schemas.lifecycle_event import (
     LifecycleEventCreate,
@@ -21,7 +21,7 @@ router = APIRouter(
 )
 
 DatabaseSession = Annotated[Session, Depends(get_db)]
-Manufacturer = Annotated[User, Depends(require_manufacturer)]
+ProductItemMember = Annotated[User, Depends(require_product_item_member)]
 
 
 @router.post(
@@ -33,7 +33,7 @@ def create_lifecycle_event(
     item_id: UUID,
     data: LifecycleEventCreate,
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> LifecycleEvent:
     """Append an event to an owned published or retired product item."""
 
@@ -71,7 +71,7 @@ def create_lifecycle_event(
 def list_lifecycle_events(
     item_id: UUID,
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> list[LifecycleEvent]:
     """List an owned product item's complete history, newest first."""
 

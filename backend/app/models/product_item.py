@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from app.models.lifecycle_event import LifecycleEvent
     from app.models.organization import Organization
     from app.models.product_model import ProductModel
+    from app.models.user import User
 
 
 # SQLite supports JSON in tests, while PostgreSQL stores passport values as JSONB.
@@ -58,6 +59,12 @@ class ProductItem(Base):
         ForeignKey("product_models.id"),
         index=True,
         nullable=False,
+    )
+
+    # Legacy items have no creator; every newly registered item records one.
+    created_by_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True,
     )
 
     serial_number: Mapped[str] = mapped_column(
@@ -105,6 +112,7 @@ class ProductItem(Base):
 
     organization: Mapped[Organization] = relationship()
     product_model: Mapped[ProductModel] = relationship(back_populates="items")
+    created_by: Mapped[User | None] = relationship()
     lifecycle_events: Mapped[list[LifecycleEvent]] = relationship(
         back_populates="product_item",
     )

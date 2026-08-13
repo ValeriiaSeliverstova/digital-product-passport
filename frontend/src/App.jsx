@@ -11,6 +11,7 @@ import ProductModelListPage from './pages/ProductModelListPage.jsx'
 import PublicPassportPage from './pages/PublicPassportPage.jsx'
 import PublicSupportTicketPage from './pages/PublicSupportTicketPage.jsx'
 import TemplateListPage from './pages/TemplateListPage.jsx'
+import TeamMemberPage from './pages/TeamMemberPage.jsx'
 import { getCurrentUser, login } from './services/auth.js'
 import { ApiError } from './services/api.js'
 
@@ -42,7 +43,9 @@ function App() {
       // The short-lived token stays only in React memory, never localStorage.
       setAccessToken(tokenResponse.access_token)
       setCurrentUser(user)
-      setCurrentPage('templates')
+      setCurrentPage(
+        user.role.name === 'service_technician' ? 'product-items' : 'templates',
+      )
       setSelectedTemplateId(null)
       setSelectedProductModelId(null)
       setSelectedProductItemId(null)
@@ -103,6 +106,20 @@ function App() {
         onLogout={handleLogout}
         onNavigate={handleNavigate}
         onOrganizationUpdated={handleOrganizationUpdated}
+      />
+    )
+  }
+
+  if (
+    currentPage === 'team-members' &&
+    currentUser.role.name === 'manufacturer_user'
+  ) {
+    return (
+      <TeamMemberPage
+        accessToken={accessToken}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onNavigate={handleNavigate}
       />
     )
   }

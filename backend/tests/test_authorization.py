@@ -3,7 +3,11 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from app.dependencies.auth import require_manufacturer, require_system_admin
+from app.dependencies.auth import (
+    require_manufacturer,
+    require_product_item_member,
+    require_system_admin,
+)
 from app.models import Role, User
 
 
@@ -55,6 +59,21 @@ def test_require_system_admin_rejects_manufacturer() -> None:
 
     with pytest.raises(HTTPException) as error:
         require_system_admin(user)
+
+
+def test_product_item_member_accepts_technician_with_organization() -> None:
+    user = build_user("service_technician", has_organization=True)
+
+    assert require_product_item_member(user) is user
+
+
+def test_product_item_member_rejects_technician_without_organization() -> None:
+    user = build_user("service_technician")
+
+    with pytest.raises(HTTPException) as error:
+        require_product_item_member(user)
+
+    assert error.value.status_code == 403
 
     assert error.value.status_code == 403
     assert error.value.detail == "Insufficient permissions"

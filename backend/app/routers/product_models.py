@@ -19,7 +19,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies.auth import require_manufacturer
+from app.dependencies.auth import (
+    SERVICE_TECHNICIAN_ROLE,
+    require_manufacturer,
+    require_product_item_member,
+)
 from app.image_storage import (
     MAX_IMAGE_BYTES,
     delete_image,
@@ -41,6 +45,7 @@ router = APIRouter(prefix="/api/product-models", tags=["product models"])
 
 DatabaseSession = Annotated[Session, Depends(get_db)]
 Manufacturer = Annotated[User, Depends(require_manufacturer)]
+ProductItemMember = Annotated[User, Depends(require_product_item_member)]
 
 
 @router.post(
@@ -102,14 +107,24 @@ def create_product_model(
 @router.get("", response_model=list[ProductModelResponse])
 def list_product_models(
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> list[ProductModel]:
     """List only product models owned by the current manufacturer."""
 
-    statement = (
-        select(ProductModel)
-        .where(ProductModel.organization_id == current_user.organization_id)
-        .order_by(ProductModel.created_at.desc(), ProductModel.name)
+    filters = [ProductModel.organization_id == current_user.organization_id]
+    if current_user.role.name == SERVICE_TECHNICIAN_ROLE:
+        filters.extend(
+            [
+                ProductModel.status == "active",
+                PassportTemplate.status == "active",
+            ],
+        )
+    statement = select(ProductModel).where(*filters)
+    if current_user.role.name == SERVICE_TECHNICIAN_ROLE:
+        statement = statement.join(PassportTemplate)
+    statement = statement.order_by(
+        ProductModel.created_at.desc(),
+        ProductModel.name,
     )
     return list(db.scalars(statement).all())
 
@@ -182,7 +197,7 @@ def list_product_model_page(
 def get_product_model(
     model_id: UUID,
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> ProductModel:
     """Return one product model owned by the current manufacturer."""
 

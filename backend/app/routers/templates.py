@@ -8,7 +8,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.dependencies.auth import require_manufacturer
+from app.dependencies.auth import (
+    SERVICE_TECHNICIAN_ROLE,
+    require_manufacturer,
+    require_product_item_member,
+)
 from app.models import PassportTemplate, ProductCategory, TemplateField, User
 from app.schemas.passport_template import (
     PassportTemplateCreate,
@@ -30,6 +34,7 @@ router = APIRouter(prefix="/api/templates", tags=["passport templates"])
 
 DatabaseSession = Annotated[Session, Depends(get_db)]
 Manufacturer = Annotated[User, Depends(require_manufacturer)]
+ProductItemMember = Annotated[User, Depends(require_product_item_member)]
 
 
 @router.post(
@@ -72,16 +77,18 @@ def create_template(
 @router.get("", response_model=list[PassportTemplateResponse])
 def list_templates(
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> list[PassportTemplate]:
     """List only templates owned by the current manufacturer."""
 
-    statement = (
-        select(PassportTemplate)
-        .where(
-            PassportTemplate.organization_id == current_user.organization_id,
-        )
-        .order_by(PassportTemplate.created_at.desc(), PassportTemplate.name)
+    filters = [
+        PassportTemplate.organization_id == current_user.organization_id,
+    ]
+    if current_user.role.name == SERVICE_TECHNICIAN_ROLE:
+        filters.append(PassportTemplate.status == "active")
+    statement = select(PassportTemplate).where(*filters).order_by(
+        PassportTemplate.created_at.desc(),
+        PassportTemplate.name,
     )
     return list(db.scalars(statement).all())
 
@@ -168,7 +175,7 @@ def list_template_families(
 def get_template(
     template_id: UUID,
     db: DatabaseSession,
-    current_user: Manufacturer,
+    current_user: ProductItemMember,
 ) -> PassportTemplate:
     """Return one owned template and its ordered fields."""
 

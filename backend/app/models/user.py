@@ -23,8 +23,9 @@ class User(Base):
         default=uuid4,
     )
 
-    # Platform administrators may have no organization. Manufacturer users
-    # must be linked to one; that rule will be enforced by application logic.
+    # Platform administrators may have no organization. Organization
+    # administrators and technicians must be linked to one; application
+    # authorization enforces that rule.
     organization_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organizations.id"),
         nullable=True,

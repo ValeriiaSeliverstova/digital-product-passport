@@ -12,6 +12,7 @@ from app.routers.support_tickets import router as support_tickets_router
 from app.routers.product_items import router as product_items_router
 from app.routers.product_models import router as product_models_router
 from app.routers.templates import router as templates_router
+from app.routers.team_members import router as team_members_router
 from app.routers.users import router as users_router
 
 app = FastAPI(title="Digital Product Passport API")
@@ -35,6 +36,7 @@ app.include_router(support_tickets_router)
 app.include_router(product_items_router)
 app.include_router(product_models_router)
 app.include_router(templates_router)
+app.include_router(team_members_router)
 app.include_router(users_router)
 
 

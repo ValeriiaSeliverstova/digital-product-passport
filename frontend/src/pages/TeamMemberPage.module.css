@@ -1,0 +1,135 @@
+.page {
+  min-height: 100vh;
+}
+
+.main {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4) var(--space-12);
+}
+
+.heading {
+  margin-block-end: var(--space-6);
+}
+
+.heading h1,
+.heading p,
+.card h2,
+.card p {
+  margin: 0;
+}
+
+.heading p,
+.form p {
+  margin-block-start: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.card {
+  width: 100%;
+  max-width: var(--form-max-width);
+  margin-block-end: var(--space-6);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-dialog);
+}
+
+.form {
+  display: grid;
+  max-width: var(--form-max-width);
+  margin-block-start: var(--space-4);
+  gap: var(--space-4);
+}
+
+.form div {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.form button,
+.activateButton,
+.deactivateButton {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.form button,
+.activateButton {
+  justify-self: start;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.form button:hover:not(:disabled),
+.activateButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.deactivateButton {
+  color: var(--color-error);
+  background: var(--color-surface);
+  border: 1px solid var(--color-error);
+}
+
+.notice,
+.error {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+}
+
+.notice {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.memberList {
+  display: grid;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.memberList li {
+  display: flex;
+  padding-block: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.memberList li:last-child {
+  border-bottom: 0;
+}
+
+.memberList li div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.memberList span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+@media (min-width: 48rem) {
+  .main {
+    padding: var(--space-8) var(--space-6) var(--space-12);
+  }
+
+  .card {
+    padding: var(--space-6);
+  }
+}

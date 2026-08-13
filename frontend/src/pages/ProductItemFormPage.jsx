@@ -132,6 +132,7 @@ function ProductItemFormPage({
   onNavigate,
 }) {
   const isEditing = Boolean(itemId)
+  const isOrganizationAdmin = currentUser.role.name === 'manufacturer_user'
   const [item, setItem] = useState(null)
   const [models, setModels] = useState([])
   const [selectedModelId, setSelectedModelId] = useState('')
@@ -749,7 +750,9 @@ function ProductItemFormPage({
                   )}
                 </>
               )}
-              {item?.status === 'published' && !isRetirementConfirmationOpen && (
+              {item?.status === 'published' &&
+                isOrganizationAdmin &&
+                !isRetirementConfirmationOpen && (
                 <button
                   className={styles.dangerButton}
                   type="button"
