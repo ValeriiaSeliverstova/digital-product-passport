@@ -4,7 +4,19 @@ import secrets
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -12,8 +24,10 @@ from app.database import get_db
 from app.azure_devops import (
     AzureDevOpsNotConfiguredError,
     AzureDevOpsRequestError,
+    add_work_item_attachment,
     create_support_work_item,
     support_ticket_is_enabled,
+    upload_work_item_attachment,
 )
 from app.config import settings
 from app.email_delivery import (
@@ -29,6 +43,7 @@ from app.models import (
     ProductModel,
     SupportTicket,
 )
+from app.image_storage import detect_image_content_type
 from app.schemas.public_passport import (
     PublicLifecycleEvent,
     PublicPassportField,
@@ -46,6 +61,32 @@ from app.support_ticket_protection import (
 router = APIRouter(prefix="/api/passports", tags=["public passports"])
 
 DatabaseSession = Annotated[Session, Depends(get_db)]
+
+MAX_SUPPORT_ATTACHMENT_BYTES = 5 * 1024 * 1024
+SUPPORT_ATTACHMENT_EXTENSIONS = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+}
+
+
+def support_ticket_from_form(
+    requester_name: Annotated[str, Form()],
+    requester_email: Annotated[str, Form()],
+    subject: Annotated[str, Form()],
+    message: Annotated[str, Form()],
+) -> SupportTicketCreate:
+    """Build the validated ticket schema from a multipart form."""
+
+    try:
+        return SupportTicketCreate(
+            requester_name=requester_name,
+            requester_email=requester_email,
+            subject=subject,
+            message=message,
+        )
+    except ValidationError as error:
+        raise RequestValidationError(error.errors()) from error
 
 
 @router.get("/{public_id}", response_model=PublicPassportResponse)
@@ -121,21 +162,32 @@ def get_public_passport(
 )
 def submit_support_ticket(
     public_id: UUID,
-    data: SupportTicketCreate,
+    data: Annotated[SupportTicketCreate, Depends(support_ticket_from_form)],
     request: Request,
     db: DatabaseSession,
     idempotency_key: Annotated[
         str,
         Header(alias="Idempotency-Key", min_length=8, max_length=128),
     ],
+    attachment: Annotated[UploadFile | None, File()] = None,
 ) -> SupportTicketResponse:
     """Create an Azure DevOps ticket for one published product passport."""
 
     passport_id = str(public_id)
     client_host = request.client.host if request.client is not None else "unknown"
+    attachment_data, attachment_content_type = _validate_support_attachment(
+        attachment,
+    )
+    attachment_digest = (
+        hashlib.sha256(attachment_data).hexdigest()
+        if attachment_data is not None
+        else None
+    )
+    fingerprint_data = data.model_dump(mode="json")
+    fingerprint_data["attachment_sha256"] = attachment_digest
     fingerprint = hashlib.sha256(
         json.dumps(
-            data.model_dump(mode="json"),
+            fingerprint_data,
             sort_keys=True,
             separators=(",", ":"),
         ).encode(),
@@ -206,6 +258,16 @@ def submit_support_ticket(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Idempotency key was already used for different ticket data",
             )
+        if attachment_data is not None and not existing_ticket.attachment_added:
+            _add_attachment_to_ticket(
+                db=db,
+                support_ticket=existing_ticket,
+                attachment_data=attachment_data,
+                attachment_content_type=attachment_content_type,
+                area_path=organization.azure_devops_area_path,
+                passport_id=passport_id,
+                idempotency_key=idempotency_key,
+            )
         if not existing_ticket.tracking_email_sent:
             _send_new_tracking_code(
                 db=db,
@@ -232,7 +294,6 @@ def submit_support_ticket(
             subject=data.subject,
             message=data.message,
             manufacturer_name=organization.name,
-            organization_logo_url=organization.logo_url,
             category_name=product_model.category.name,
             model_code=product_model.model_code,
             model_name=product_model.name,
@@ -270,9 +331,20 @@ def submit_support_ticket(
         request_fingerprint=fingerprint,
         subject=data.subject,
         tracking_code_hash=_hash_tracking_code(tracking_code),
+        attachment_added=attachment_data is None,
     )
     db.add(support_ticket)
     db.commit()
+    if attachment_data is not None:
+        _add_attachment_to_ticket(
+            db=db,
+            support_ticket=support_ticket,
+            attachment_data=attachment_data,
+            attachment_content_type=attachment_content_type,
+            area_path=organization.azure_devops_area_path,
+            passport_id=passport_id,
+            idempotency_key=idempotency_key,
+        )
     try:
         send_tracking_email(
             recipient=data.requester_email,
@@ -280,6 +352,7 @@ def submit_support_ticket(
             tracking_code=tracking_code,
             subject=data.subject,
             manufacturer_name=organization.name,
+            organization_logo_url=organization.logo_url,
         )
     except (EmailNotConfiguredError, EmailDeliveryError) as error:
         support_ticket_guard.abort(
@@ -303,6 +376,77 @@ def submit_support_ticket(
         ticket_id=ticket_id,
     )
     return SupportTicketResponse(ticket_id=ticket_id)
+
+
+def _validate_support_attachment(
+    attachment: UploadFile | None,
+) -> tuple[bytes | None, str | None]:
+    """Accept one small raster image based on its bytes, not its filename."""
+
+    if attachment is None:
+        return None, None
+
+    attachment_data = attachment.file.read(MAX_SUPPORT_ATTACHMENT_BYTES + 1)
+    if len(attachment_data) > MAX_SUPPORT_ATTACHMENT_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Support ticket attachment must not exceed 5 MB",
+        )
+    content_type = detect_image_content_type(attachment_data)
+    if content_type not in SUPPORT_ATTACHMENT_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Support ticket attachment must be a PNG, JPEG, or WebP image",
+        )
+    return attachment_data, content_type
+
+
+def _add_attachment_to_ticket(
+    *,
+    db: Session,
+    support_ticket: SupportTicket,
+    attachment_data: bytes,
+    attachment_content_type: str | None,
+    area_path: str | None,
+    passport_id: str,
+    idempotency_key: str,
+) -> None:
+    """Upload one validated screenshot and link it to an existing Azure ticket."""
+
+    if attachment_content_type is None or area_path is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Support ticket attachment service is not configured",
+        )
+    safe_filename = (
+        f"support-{support_ticket.azure_ticket_id}-{secrets.token_hex(4)}"
+        f"{SUPPORT_ATTACHMENT_EXTENSIONS[attachment_content_type]}"
+    )
+    try:
+        attachment_url = upload_work_item_attachment(
+            file_data=attachment_data,
+            filename=safe_filename,
+            area_path=area_path,
+        )
+        add_work_item_attachment(
+            ticket_id=support_ticket.azure_ticket_id,
+            attachment_url=attachment_url,
+        )
+    except AzureDevOpsRequestError as error:
+        support_ticket_guard.abort(
+            passport_id=passport_id,
+            idempotency_key=idempotency_key,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=(
+                "Support ticket was created, but its attachment could not be "
+                "uploaded. Please retry the submission."
+            ),
+        ) from error
+
+    support_ticket.attachment_added = True
+    db.commit()
 
 
 def _send_new_tracking_code(

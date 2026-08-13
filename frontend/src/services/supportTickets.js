@@ -8,3 +8,12 @@ export function trackSupportTicket(ticketId, trackingCode) {
     body: JSON.stringify({ tracking_code: trackingCode }),
   })
 }
+
+/** Add a customer reply to the Azure ticket after verifying its private code. */
+export function replyToSupportTicket(ticketId, trackingCode, message) {
+  return apiRequest(`/api/support-tickets/${encodeURIComponent(ticketId)}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tracking_code: trackingCode, message }),
+  })
+}

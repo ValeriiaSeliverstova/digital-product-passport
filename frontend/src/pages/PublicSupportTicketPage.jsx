@@ -1,7 +1,10 @@
 import { useState } from 'react'
 
 import { ApiError } from '../services/api.js'
-import { trackSupportTicket } from '../services/supportTickets.js'
+import {
+  replyToSupportTicket,
+  trackSupportTicket,
+} from '../services/supportTickets.js'
 import styles from './PublicSupportTicketPage.module.css'
 
 const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
@@ -20,9 +23,11 @@ function PublicSupportTicketPage({ ticketId }) {
   const [ticket, setTicket] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [reply, setReply] = useState('')
+  const [isSendingReply, setIsSendingReply] = useState(false)
+  const [replyError, setReplyError] = useState('')
 
-  async function handleSubmit(event) {
-    event.preventDefault()
+  async function loadTicketStatus() {
     setIsLoading(true)
     setError('')
 
@@ -39,6 +44,31 @@ function PublicSupportTicketPage({ ticketId }) {
       )
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault()
+    loadTicketStatus()
+  }
+
+  async function handleReply(event) {
+    event.preventDefault()
+    setIsSendingReply(true)
+    setReplyError('')
+
+    try {
+      await replyToSupportTicket(
+        ticketNumber.trim(),
+        trackingCode.trim(),
+        reply.trim(),
+      )
+      setReply('')
+      await loadTicketStatus()
+    } catch {
+      setReplyError('Your reply could not be sent. Please try again.')
+    } finally {
+      setIsSendingReply(false)
     }
   }
 
@@ -111,6 +141,62 @@ function PublicSupportTicketPage({ ticketId }) {
                   </div>
                 )}
               </dl>
+              <button
+                className={styles.refreshButton}
+                type="button"
+                onClick={loadTicketStatus}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Refreshing…' : 'Refresh status'}
+              </button>
+
+
+              <section className={styles.conversation}>
+                <h3>Conversation</h3>
+                {ticket.comments.length === 0 ? (
+                  <p className={styles.emptyConversation}>
+                    No replies yet. Support comments added in Azure DevOps will
+                    appear here after refresh.
+                  </p>
+                ) : (
+                  <ol className={styles.commentList}>
+                    {ticket.comments.map((comment) => (
+                      <li
+                        className={comment.author === 'Customer'
+                          ? styles.customerComment
+                          : styles.supportComment}
+                        key={`${comment.id}-${comment.created_at}`}
+                      >
+                        <div className={styles.commentMeta}>
+                          <strong>{comment.author}</strong>
+                          <time dateTime={comment.created_at}>
+                            {formatDateTime(comment.created_at)}
+                          </time>
+                        </div>
+                        <p>{comment.message}</p>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+
+                <form className={styles.replyForm} onSubmit={handleReply}>
+                  <label htmlFor="ticket-reply">Reply to support</label>
+                  <textarea
+                    id="ticket-reply"
+                    maxLength={2000}
+                    rows={4}
+                    value={reply}
+                    onChange={(event) => setReply(event.target.value)}
+                    required
+                  />
+                  {replyError && (
+                    <p className={styles.error} role="alert">{replyError}</p>
+                  )}
+                  <button type="submit" disabled={isSendingReply}>
+                    {isSendingReply ? 'Sending…' : 'Send reply'}
+                  </button>
+                </form>
+              </section>
             </div>
           )}
         </section>

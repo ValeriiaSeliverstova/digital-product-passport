@@ -51,6 +51,7 @@ def test_public_passport_can_submit_enriched_support_ticket(
     product_item.organization.azure_devops_area_path = "Students\\Safety Institute"
     db_session.commit()
     captured: dict[str, object] = {}
+    captured_email: dict[str, object] = {}
 
     def fake_create_support_work_item(**values: object) -> tuple[int, str]:
         captured.update(values)
@@ -60,10 +61,14 @@ def test_public_passport_can_submit_enriched_support_ticket(
         "app.routers.passports.create_support_work_item",
         fake_create_support_work_item,
     )
+    monkeypatch.setattr(
+        "app.routers.passports.send_tracking_email",
+        lambda **values: captured_email.update(values),
+    )
 
     response = client.post(
         f"/api/passports/{product_item.public_id}/support-tickets",
-        json=TICKET_DATA,
+        data=TICKET_DATA,
         headers=idempotency_headers(),
     )
 
@@ -79,6 +84,8 @@ def test_public_passport_can_submit_enriched_support_ticket(
     assert captured["serial_number"] == product_item.serial_number
     assert captured["public_id"] == str(product_item.public_id)
     assert captured["passport_url"].endswith(f"/passport/{product_item.public_id}")
+    assert captured_email["organization_logo_url"] == product_item.organization.logo_url
+    assert captured_email["ticket_id"] == 421
     stored_ticket = db_session.query(SupportTicket).one()
     assert stored_ticket.azure_ticket_id == 421
     assert stored_ticket.product_item_id == product_item.id
@@ -94,12 +101,12 @@ def test_support_ticket_requires_a_published_passport(
 
     draft_response = client.post(
         f"/api/passports/{draft.public_id}/support-tickets",
-        json=TICKET_DATA,
+        data=TICKET_DATA,
         headers=idempotency_headers(),
     )
     unknown_response = client.post(
         f"/api/passports/{uuid4()}/support-tickets",
-        json=TICKET_DATA,
+        data=TICKET_DATA,
         headers=idempotency_headers(),
     )
 
@@ -123,7 +130,7 @@ def test_support_ticket_reports_safe_configuration_and_upstream_errors(
     )
     not_configured = client.post(
         f"/api/passports/{product_item.public_id}/support-tickets",
-        json=TICKET_DATA,
+        data=TICKET_DATA,
         headers=idempotency_headers(),
     )
 
@@ -136,7 +143,7 @@ def test_support_ticket_reports_safe_configuration_and_upstream_errors(
     )
     upstream_error = client.post(
         f"/api/passports/{product_item.public_id}/support-tickets",
-        json=TICKET_DATA,
+        data=TICKET_DATA,
         headers=idempotency_headers(),
     )
 
@@ -158,7 +165,7 @@ def test_support_ticket_validates_customer_input(
 
     response = client.post(
         f"/api/passports/{product_item.public_id}/support-tickets",
-        json={**TICKET_DATA, "requester_email": "not-an-email", "message": "short"},
+        data={**TICKET_DATA, "requester_email": "not-an-email", "message": "short"},
         headers=idempotency_headers(),
     )
 
@@ -188,12 +195,12 @@ def test_repeated_idempotency_key_returns_ticket_without_duplicate_creation(
 
     first = client.post(
         f"/api/passports/{product_item.public_id}/support-tickets",
-        json=TICKET_DATA,
+        data=TICKET_DATA,
         headers=headers,
     )
     repeated = client.post(
         f"/api/passports/{product_item.public_id}/support-tickets",
-        json=TICKET_DATA,
+        data=TICKET_DATA,
         headers=headers,
     )
 
@@ -218,13 +225,13 @@ def test_idempotency_key_cannot_be_reused_for_changed_ticket_data(
     headers = idempotency_headers("reused-ticket-key")
     client.post(
         f"/api/passports/{product_item.public_id}/support-tickets",
-        json=TICKET_DATA,
+        data=TICKET_DATA,
         headers=headers,
     )
 
     response = client.post(
         f"/api/passports/{product_item.public_id}/support-tickets",
-        json={**TICKET_DATA, "subject": "A different problem"},
+        data={**TICKET_DATA, "subject": "A different problem"},
         headers=headers,
     )
 
@@ -250,10 +257,10 @@ def test_support_ticket_rate_limit_rejects_sixth_attempt(
     url = f"/api/passports/{product_item.public_id}/support-tickets"
 
     allowed = [
-        client.post(url, json=TICKET_DATA, headers=idempotency_headers())
+        client.post(url, data=TICKET_DATA, headers=idempotency_headers())
         for _ in range(5)
     ]
-    limited = client.post(url, json=TICKET_DATA, headers=idempotency_headers())
+    limited = client.post(url, data=TICKET_DATA, headers=idempotency_headers())
 
     assert all(response.status_code == 201 for response in allowed)
     assert limited.status_code == 429
@@ -271,7 +278,7 @@ def test_support_ticket_requires_idempotency_key(
 
     response = client.post(
         f"/api/passports/{product_item.public_id}/support-tickets",
-        json=TICKET_DATA,
+        data=TICKET_DATA,
     )
 
     assert response.status_code == 422
@@ -310,8 +317,8 @@ def test_email_failure_retry_does_not_create_second_azure_ticket(
     headers = idempotency_headers("retry-email-ticket")
     url = f"/api/passports/{product_item.public_id}/support-tickets"
 
-    failed_email = client.post(url, json=TICKET_DATA, headers=headers)
-    retry = client.post(url, json=TICKET_DATA, headers=headers)
+    failed_email = client.post(url, data=TICKET_DATA, headers=headers)
+    retry = client.post(url, data=TICKET_DATA, headers=headers)
 
     assert failed_email.status_code == 502
     assert retry.status_code == 201
@@ -319,3 +326,86 @@ def test_email_failure_retry_does_not_create_second_azure_ticket(
     assert azure_creation_count == 1
     assert email_attempt_count == 2
     assert db_session.query(SupportTicket).one().tracking_email_sent is True
+
+
+def test_ticket_uploads_validated_screenshot_with_safe_filename(
+    client: TestClient,
+    db_session: Session,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    product_item = create_passport(db_session)
+    product_item.organization.azure_devops_area_path = "Students\\Support"
+    db_session.commit()
+    captured_upload: dict[str, object] = {}
+    captured_relation: dict[str, object] = {}
+    monkeypatch.setattr(
+        "app.routers.passports.create_support_work_item",
+        lambda **_values: (701, None),
+    )
+    monkeypatch.setattr(
+        "app.routers.passports.upload_work_item_attachment",
+        lambda **values: (
+            captured_upload.update(values)
+            or "https://dev.azure.com/example/attachment"
+        ),
+    )
+    monkeypatch.setattr(
+        "app.routers.passports.add_work_item_attachment",
+        lambda **values: captured_relation.update(values),
+    )
+    png_data = b"\x89PNG\r\n\x1a\n" + b"screenshot-data"
+
+    response = client.post(
+        f"/api/passports/{product_item.public_id}/support-tickets",
+        data=TICKET_DATA,
+        files={"attachment": ("unsafe.php", png_data, "application/x-php")},
+        headers=idempotency_headers(),
+    )
+
+    assert response.status_code == 201, response.text
+    assert captured_upload["file_data"] == png_data
+    assert captured_upload["area_path"] == "Students\\Support"
+    assert captured_upload["filename"].startswith("support-701-")
+    assert captured_upload["filename"].endswith(".png")
+    assert "unsafe" not in captured_upload["filename"]
+    assert captured_relation == {
+        "ticket_id": 701,
+        "attachment_url": "https://dev.azure.com/example/attachment",
+    }
+    assert db_session.query(SupportTicket).one().attachment_added is True
+
+
+def test_ticket_rejects_unsupported_and_oversized_attachments(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    product_item = create_passport(db_session)
+    url = f"/api/passports/{product_item.public_id}/support-tickets"
+
+    unsupported = client.post(
+        url,
+        data=TICKET_DATA,
+        files={"attachment": ("evidence.svg", b"<svg></svg>", "image/svg+xml")},
+        headers=idempotency_headers(),
+    )
+    oversized = client.post(
+        url,
+        data=TICKET_DATA,
+        files={
+            "attachment": (
+                "large.png",
+                b"\x89PNG\r\n\x1a\n" + b"x" * (5 * 1024 * 1024),
+                "image/png",
+            ),
+        },
+        headers=idempotency_headers(),
+    )
+
+    assert unsupported.status_code == 422
+    assert unsupported.json() == {
+        "detail": "Support ticket attachment must be a PNG, JPEG, or WebP image",
+    }
+    assert oversized.status_code == 413
+    assert oversized.json() == {
+        "detail": "Support ticket attachment must not exceed 5 MB",
+    }

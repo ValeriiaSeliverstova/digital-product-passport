@@ -43,6 +43,21 @@ class SupportTicketTrackRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
 
+class SupportTicketReplyRequest(SupportTicketTrackRequest):
+    """Tracking credentials and a new customer message."""
+
+    message: str = Field(min_length=1, max_length=2000)
+
+
+class SupportTicketCommentResponse(BaseModel):
+    """Customer-safe representation of an Azure work-item comment."""
+
+    id: int
+    author: str
+    message: str
+    created_at: datetime
+
+
 class SupportTicketStatusResponse(BaseModel):
     """Small customer-safe status view derived from Azure DevOps."""
 
@@ -51,3 +66,4 @@ class SupportTicketStatusResponse(BaseModel):
     status: str
     submitted_at: datetime
     updated_at: datetime | None
+    comments: list[SupportTicketCommentResponse]

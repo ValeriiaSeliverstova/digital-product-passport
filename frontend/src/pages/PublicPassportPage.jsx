@@ -120,12 +120,26 @@ function PublicPassportPage({ publicId }) {
   const [ticketState, setTicketState] = useState('idle')
   const [ticketError, setTicketError] = useState('')
   const [createdTicket, setCreatedTicket] = useState(null)
+  const [ticketAttachment, setTicketAttachment] = useState(null)
   const ticketIdempotencyKey = useRef(null)
 
   function updateTicketField(field, value) {
     // Edited ticket data represents a new request and receives a new key.
     ticketIdempotencyKey.current = null
     setTicketForm((current) => ({ ...current, [field]: value }))
+  }
+
+  function handleTicketAttachment(event) {
+    const file = event.target.files?.[0] || null
+    ticketIdempotencyKey.current = null
+    setTicketError('')
+    if (file && file.size > 5 * 1024 * 1024) {
+      event.target.value = ''
+      setTicketAttachment(null)
+      setTicketError('The screenshot must not exceed 5 MB.')
+      return
+    }
+    setTicketAttachment(file)
   }
 
   async function handleTicketSubmit(event) {
@@ -138,6 +152,7 @@ function PublicPassportPage({ publicId }) {
       const result = await submitSupportTicket(
         publicId,
         ticketForm,
+        ticketAttachment,
         ticketIdempotencyKey.current,
       )
       setCreatedTicket(result)
@@ -487,6 +502,20 @@ function PublicPassportPage({ publicId }) {
                             }
                             required
                           />
+                        </div>
+                        <div className={`${styles.ticketField} ${styles.ticketFullWidth}`}>
+                          <label htmlFor="support-attachment">
+                            Screenshot (optional)
+                          </label>
+                          <input
+                            id="support-attachment"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            onChange={handleTicketAttachment}
+                          />
+                          <span className={styles.ticketHint}>
+                            PNG, JPEG, or WebP. Maximum size 5 MB.
+                          </span>
                         </div>
                         <p className={`${styles.ticketHint} ${styles.ticketFullWidth}`}>
                           The product model, serial number, and passport link will be
