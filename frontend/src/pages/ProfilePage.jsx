@@ -22,6 +22,8 @@ const ORGANIZATION_FIELDS = [
   'contact_email',
   'phone',
   'website',
+  'azure_devops_area_path',
+  'azure_devops_work_item_type',
 ]
 
 function organizationFormValues(organization) {
@@ -394,6 +396,51 @@ function ProfilePage({
                     updateOrganizationField('website', event.target.value)
                   }
                 />
+              </div>
+
+              <div className={`${styles.field} ${styles.fullWidthField}`}>
+                <label htmlFor="organization-support-area">
+                  Azure DevOps support Area Path (optional)
+                </label>
+                <input
+                  id="organization-support-area"
+                  maxLength={400}
+                  placeholder="Students\\DPP Capstone Project\\Support"
+                  value={organizationForm.azure_devops_area_path}
+                  onChange={(event) =>
+                    updateOrganizationField(
+                      'azure_devops_area_path',
+                      event.target.value,
+                    )
+                  }
+                />
+                <span className={styles.fieldHint}>
+                  Use the complete Azure path, for example Students\DPP Capstone
+                  Project\Support.
+                </span>
+              </div>
+
+              <div className={`${styles.field} ${styles.fullWidthField}`}>
+                <label htmlFor="organization-support-work-item-type">
+                  Azure DevOps work-item type
+                </label>
+                <input
+                  id="organization-support-work-item-type"
+                  maxLength={128}
+                  placeholder="Customer Support"
+                  value={organizationForm.azure_devops_work_item_type}
+                  onChange={(event) =>
+                    updateOrganizationField(
+                      'azure_devops_work_item_type',
+                      event.target.value,
+                    )
+                  }
+                  required
+                />
+                <span className={styles.fieldHint}>
+                  This must exactly match a work-item type in the Azure project.
+                  The PAT remains securely configured on the backend.
+                </span>
               </div>
 
               {organizationNotice && (

@@ -44,6 +44,7 @@ class PublicPassportResponse(BaseModel):
     support_email: str | None
     support_phone: str | None
     support_website: str | None
+    support_ticket_enabled: bool
     category_name: str
     model_code: str
     model_name: str

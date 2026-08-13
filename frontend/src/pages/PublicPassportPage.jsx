@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 
 import { ApiError, apiUrl } from '../services/api.js'
-import { getPublicPassport } from '../services/passports.js'
+import {
+  getPublicPassport,
+  submitSupportTicket,
+} from '../services/passports.js'
 import styles from './PublicPassportPage.module.css'
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -78,6 +81,12 @@ function SupportIcon({ type }) {
         <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
       </>
     ),
+    ticket: (
+      <>
+        <path d="M4 4h16v16H4z" />
+        <path d="M8 9h8M8 13h5" />
+      </>
+    ),
   }
 
   return (
@@ -101,6 +110,39 @@ function PublicPassportPage({ publicId }) {
   const [passport, setPassport] = useState(null)
   const [loadState, setLoadState] = useState('loading')
   const [reloadKey, setReloadKey] = useState(0)
+  const [showTicketForm, setShowTicketForm] = useState(false)
+  const [ticketForm, setTicketForm] = useState({
+    requester_name: '',
+    requester_email: '',
+    subject: '',
+    message: '',
+  })
+  const [ticketState, setTicketState] = useState('idle')
+  const [ticketError, setTicketError] = useState('')
+  const [createdTicket, setCreatedTicket] = useState(null)
+
+  function updateTicketField(field, value) {
+    setTicketForm((current) => ({ ...current, [field]: value }))
+  }
+
+  async function handleTicketSubmit(event) {
+    event.preventDefault()
+    setTicketState('submitting')
+    setTicketError('')
+
+    try {
+      const result = await submitSupportTicket(publicId, ticketForm)
+      setCreatedTicket(result)
+      setTicketState('success')
+    } catch (error) {
+      setTicketState('error')
+      setTicketError(
+        error instanceof ApiError
+          ? error.message
+          : 'The support ticket could not be submitted. Please try again.',
+      )
+    }
+  }
 
   useEffect(() => {
     let isCurrentRequest = true
@@ -290,7 +332,8 @@ function PublicPassportPage({ publicId }) {
               )}
             </section>
 
-            {(passport.support_email ||
+            {(passport.support_ticket_enabled ||
+              passport.support_email ||
               passport.support_phone ||
               passport.support_website) && (
               <section className={styles.detailsCard}>
@@ -342,7 +385,123 @@ function PublicPassportPage({ publicId }) {
                       </span>
                     </a>
                   )}
+                  {passport.support_ticket_enabled && (
+                    <button
+                      className={styles.supportLink}
+                      type="button"
+                      onClick={() => setShowTicketForm((visible) => !visible)}
+                      aria-expanded={showTicketForm}
+                      aria-controls="support-ticket-form"
+                    >
+                      <SupportIcon type="ticket" />
+                      <span className={styles.supportText}>
+                        <strong>Submit a ticket</strong>
+                        <span>Send product details with your request</span>
+                      </span>
+                    </button>
+                  )}
                 </div>
+
+                {showTicketForm && (
+                  <form
+                    className={styles.ticketForm}
+                    id="support-ticket-form"
+                    onSubmit={handleTicketSubmit}
+                  >
+                    {ticketState === 'success' ? (
+                      <div className={styles.ticketSuccess} role="status">
+                        <strong>Support ticket #{createdTicket.ticket_id} was submitted.</strong>
+                        <span>{passport.manufacturer_name} can now review your request.</span>
+                        {createdTicket.ticket_url && (
+                          <a
+                            href={createdTicket.ticket_url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View ticket in Azure DevOps
+                          </a>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <div className={styles.ticketField}>
+                          <label htmlFor="support-requester-name">Your name</label>
+                          <input
+                            id="support-requester-name"
+                            autoComplete="name"
+                            maxLength={100}
+                            value={ticketForm.requester_name}
+                            onChange={(event) =>
+                              updateTicketField('requester_name', event.target.value)
+                            }
+                            required
+                          />
+                        </div>
+                        <div className={styles.ticketField}>
+                          <label htmlFor="support-requester-email">Your email</label>
+                          <input
+                            id="support-requester-email"
+                            type="email"
+                            autoComplete="email"
+                            maxLength={320}
+                            value={ticketForm.requester_email}
+                            onChange={(event) =>
+                              updateTicketField('requester_email', event.target.value)
+                            }
+                            required
+                          />
+                        </div>
+                        <div className={`${styles.ticketField} ${styles.ticketFullWidth}`}>
+                          <label htmlFor="support-subject">Subject</label>
+                          <input
+                            id="support-subject"
+                            maxLength={160}
+                            value={ticketForm.subject}
+                            onChange={(event) =>
+                              updateTicketField('subject', event.target.value)
+                            }
+                            required
+                          />
+                        </div>
+                        <div className={`${styles.ticketField} ${styles.ticketFullWidth}`}>
+                          <label htmlFor="support-message">How can we help?</label>
+                          <textarea
+                            id="support-message"
+                            minLength={10}
+                            maxLength={5000}
+                            rows={6}
+                            value={ticketForm.message}
+                            onChange={(event) =>
+                              updateTicketField('message', event.target.value)
+                            }
+                            required
+                          />
+                        </div>
+                        <p className={`${styles.ticketHint} ${styles.ticketFullWidth}`}>
+                          The product model, serial number, and passport link will be
+                          included automatically.
+                        </p>
+                        {ticketError && (
+                          <p
+                            className={`${styles.ticketError} ${styles.ticketFullWidth}`}
+                            role="alert"
+                          >
+                            {ticketError}
+                          </p>
+                        )}
+                        <button
+                          className={`${styles.ticketSubmit} ${styles.ticketFullWidth}`}
+                          type="submit"
+                          disabled={ticketState === 'submitting'}
+                        >
+                          {ticketState === 'submitting'
+                            ? 'Submitting…'
+                            : 'Submit support ticket'}
+                        </button>
+                      </>
+                    )}
+                  </form>
+                )}
               </section>
             )}
 

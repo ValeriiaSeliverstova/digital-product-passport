@@ -225,10 +225,65 @@
   font-weight: var(--font-weight-semibold);
   text-decoration: none;
   overflow-wrap: anywhere;
+  text-align: left;
 }
 
 .supportLink:hover {
   border-color: var(--color-primary);
+}
+
+.ticketForm {
+  display: grid;
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-6);
+  gap: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.ticketField,
+.ticketSuccess {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ticketField textarea {
+  resize: vertical;
+}
+
+.ticketHint,
+.ticketError {
+  margin: 0;
+  font-size: var(--font-size-small);
+}
+
+.ticketHint,
+.ticketSuccess span {
+  color: var(--color-text-muted);
+}
+
+.ticketError {
+  padding: var(--space-3);
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border-radius: var(--radius-control);
+}
+
+.ticketSubmit {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  justify-self: start;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ticketSuccess {
+  padding: var(--space-4);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border-radius: var(--radius-control);
 }
 
 .supportIcon {
@@ -309,7 +364,16 @@
   }
 
   .supportLinks {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ticketForm {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ticketFullWidth,
+  .ticketSuccess {
+    grid-column: 1 / -1;
   }
 
   .sectionHeading {

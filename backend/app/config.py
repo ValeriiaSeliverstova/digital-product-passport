@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     gemini_api_key: SecretStr | None = None
     gemini_model: str = Field(default="gemini-3.6-flash", min_length=1)
 
+    azure_devops_pat: SecretStr | None = None
+    azure_devops_project_url: str = "https://dev.azure.com/what-software/Students"
+
     @field_validator("jwt_secret_key")
     @classmethod
     def validate_jwt_secret_key(cls, value: SecretStr) -> SecretStr:
@@ -40,6 +43,15 @@ class Settings(BaseSettings):
 
         if len(value.get_secret_value()) < 32:
             raise ValueError("JWT_SECRET_KEY must contain at least 32 characters")
+        return value
+
+    @field_validator("azure_devops_pat", mode="before")
+    @classmethod
+    def empty_azure_devops_pat_is_none(cls, value: object) -> object:
+        """Treat an empty optional PAT setting as an unconfigured integration."""
+
+        if isinstance(value, str) and not value.strip():
+            return None
         return value
 
     @field_validator("frontend_origin")
@@ -60,6 +72,27 @@ class Settings(BaseSettings):
         ):
             raise ValueError(
                 "FRONTEND_ORIGIN must be an HTTP(S) origin without a path",
+            )
+        return value
+
+    @field_validator("azure_devops_project_url")
+    @classmethod
+    def validate_azure_devops_project_url(cls, value: str) -> str:
+        """Require an HTTPS Azure DevOps project URL without extra URL parts."""
+
+        value = value.strip().rstrip("/")
+        parsed = urlsplit(value)
+        if (
+            parsed.scheme != "https"
+            or parsed.hostname != "dev.azure.com"
+            or len([part for part in parsed.path.split("/") if part]) != 2
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+        ):
+            raise ValueError(
+                "AZURE_DEVOPS_PROJECT_URL must be an HTTPS dev.azure.com project URL",
             )
         return value
 

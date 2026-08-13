@@ -17,6 +17,12 @@ class OrganizationUpdate(BaseModel):
     contact_email: str | None = Field(default=None, max_length=320)
     phone: str | None = Field(default=None, max_length=50)
     website: str | None = Field(default=None, max_length=2048)
+    azure_devops_area_path: str | None = Field(default=None, max_length=400)
+    azure_devops_work_item_type: str = Field(
+        default="Customer Support",
+        min_length=1,
+        max_length=128,
+    )
 
     @field_validator(
         "country",
@@ -27,6 +33,7 @@ class OrganizationUpdate(BaseModel):
         "contact_email",
         "phone",
         "website",
+        "azure_devops_area_path",
         mode="before",
     )
     @classmethod
@@ -68,6 +75,17 @@ class OrganizationUpdate(BaseModel):
             raise ValueError("Website must be an absolute HTTP(S) URL")
         return value
 
+    @field_validator("azure_devops_area_path")
+    @classmethod
+    def validate_azure_devops_area_path(cls, value: str | None) -> str | None:
+        """Reject URLs and control characters; Azure Area Paths are plain paths."""
+
+        if value is None:
+            return None
+        if "://" in value or any(character in value for character in "\r\n\t"):
+            raise ValueError("Azure DevOps Area Path must be a plain path")
+        return value
+
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
 
@@ -84,6 +102,8 @@ class OrganizationResponse(BaseModel):
     contact_email: str | None
     phone: str | None
     website: str | None
+    azure_devops_area_path: str | None
+    azure_devops_work_item_type: str
     has_logo: bool
     logo_updated_at: datetime | None
 

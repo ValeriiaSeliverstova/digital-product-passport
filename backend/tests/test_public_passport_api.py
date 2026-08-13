@@ -124,6 +124,7 @@ def test_published_passport_is_public_without_authentication(
     assert result["support_email"] == "support@example.com"
     assert result["support_phone"] == "+380 00 000 00 00"
     assert result["support_website"] == "https://example.com/support"
+    assert result["support_ticket_enabled"] is False
     assert result["category_name"] == "Safes"
     assert result["model_code"] == "EDS-40"
     assert result["model_name"] == "EveryDaySafe 40"

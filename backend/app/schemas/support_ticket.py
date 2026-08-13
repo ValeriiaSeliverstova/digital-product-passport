@@ -1,0 +1,29 @@
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class SupportTicketCreate(BaseModel):
+    """Customer details and problem text submitted from a public passport."""
+
+    requester_name: str = Field(min_length=1, max_length=100)
+    requester_email: str = Field(min_length=3, max_length=320)
+    subject: str = Field(min_length=1, max_length=160)
+    message: str = Field(min_length=10, max_length=5000)
+
+    @field_validator("requester_email")
+    @classmethod
+    def validate_requester_email(cls, value: str) -> str:
+        """Apply the same lightweight email validation used by profiles."""
+
+        local_part, separator, domain = value.partition("@")
+        if not separator or not local_part or "." not in domain:
+            raise ValueError("Enter a valid email address")
+        return value.lower()
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+
+class SupportTicketResponse(BaseModel):
+    """Safe Azure DevOps identifiers returned after ticket creation."""
+
+    ticket_id: int
+    ticket_url: str | None

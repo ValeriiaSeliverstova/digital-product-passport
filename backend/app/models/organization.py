@@ -68,6 +68,18 @@ class Organization(Base):
         nullable=True,
     )
 
+    azure_devops_area_path: Mapped[str | None] = mapped_column(
+        String(400),
+        nullable=True,
+    )
+
+    azure_devops_work_item_type: Mapped[str] = mapped_column(
+        String(128),
+        default="Customer Support",
+        server_default="Customer Support",
+        nullable=False,
+    )
+
     logo_public_id: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,

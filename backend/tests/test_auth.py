@@ -97,6 +97,8 @@ def test_current_user_response_includes_organization_name(
         "contact_email": None,
         "phone": None,
         "website": None,
+        "azure_devops_area_path": None,
+        "azure_devops_work_item_type": "Customer Support",
         "has_logo": False,
         "logo_updated_at": None,
     }

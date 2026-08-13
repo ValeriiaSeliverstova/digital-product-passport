@@ -56,6 +56,8 @@ def test_manufacturer_can_update_own_organization(
             "contact_email": "CONTACT@EXAMPLE.COM",
             "phone": "+380 00 000 00 00",
             "website": "https://example.com/manufacturer",
+            "azure_devops_area_path": "Students\\Safety Institute",
+            "azure_devops_work_item_type": "Customer Support",
         },
     )
 
@@ -71,6 +73,8 @@ def test_manufacturer_can_update_own_organization(
         "contact_email": "contact@example.com",
         "phone": "+380 00 000 00 00",
         "website": "https://example.com/manufacturer",
+        "azure_devops_area_path": "Students\\Safety Institute",
+        "azure_devops_work_item_type": "Customer Support",
         "has_logo": False,
         "logo_updated_at": None,
     }
@@ -79,6 +83,7 @@ def test_manufacturer_can_update_own_organization(
     assert organization.name == "Updated Safety Institute"
     assert organization.country == "Ukraine"
     assert organization.contact_email == "contact@example.com"
+    assert organization.azure_devops_area_path == "Students\\Safety Institute"
     assert other_organization.name == "Other Organization"
 
 
