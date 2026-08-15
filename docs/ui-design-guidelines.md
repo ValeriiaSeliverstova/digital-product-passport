@@ -8,9 +8,11 @@ use it when implementing and reviewing the React frontend.
 
 It applies to:
 
-- manufacturer administration pages;
+- organization-administrator pages;
+- service-technician pages with a reduced permission set;
 - future system-administrator pages;
 - the public Digital Product Passport;
+- public support-ticket submission and tracking;
 - mobile, tablet, and desktop layouts.
 
 The following words define the strength of a rule:
@@ -173,20 +175,22 @@ Breakpoints MUST respond to content needs, not specific device brands.
 
 ## 5. Application shell
 
-### 5.1 Authenticated manufacturer application
+### 5.1 Authenticated organization application
 
-Mobile shell MUST contain:
+The authenticated header contains:
 
 - application name or mark;
-- a labelled navigation button;
-- current page title;
-- a main-content landmark;
+- organization identity when available;
+- role-appropriate navigation;
 - access to account information and Logout.
 
-From 900 px, navigation SHOULD become a persistent sidebar approximately 15rem
-(240 px) wide. Navigation uses explicit labels: Dashboard, Templates, Product
-models, and Product items. The selected destination uses colour and a second
-indicator such as weight, border, or background.
+Navigation is a horizontally scrollable labelled row on narrow screens and
+uses the additional available width at larger breakpoints. Organization
+administrators receive Profile, Templates, Product models, Product items, and
+Team members. Service technicians receive Product items and Account only. The
+selected destination uses colour and a second indicator such as weight, border,
+or background. Permission-restricted destinations MUST be omitted rather than
+shown as disabled.
 
 The user's email and organization belong in the account area. Logout MUST have
 a visible text label. A “Skip to main content” link MUST be the first keyboard-
@@ -197,6 +201,10 @@ focusable item.
 The public passport MUST use a separate, simplified shell. It MUST NOT display
 manufacturer navigation or account controls. Product identity and authenticity
 must appear before detailed attributes.
+
+The public support tracker uses the same simplified DPP shell. It MUST keep the
+customer inside the DPP application and MUST NOT expose an Azure DevOps link or
+internal work-item URL.
 
 ## 6. Component standards
 
@@ -390,7 +398,12 @@ tokens and component rules.
 | Create template | Name, active category selection, version, Cancel, Create draft | One readable column | Form remains max 42rem; do not stretch controls |
 | Template details | Back navigation, editable family name, category, selected version, version history, status, lifecycle actions, ordered fields | Metadata and actions before stacked field cards | Actions may align horizontally; fields may use denser rows |
 | Bulk field editor | Field count, repeated field editors, Add field, Cancel, Save count, error summary | One field card per row; actions stack | Related controls may form a grid |
-| Public passport | Manufacturer, product name, model, public identifier, status, public attributes, documents, lifecycle information, data source/update date | Optimized for QR entry and one-column reading | Content remains centred; sections may use two columns only when meaningful |
+| Product-model list/form | Search and status filters, pagination, model identity, category, exact template version, description, status, optional image | Cards and stacked form controls | List and form may use wider grids |
+| Product-item list/form | Search, status/date filters, pagination, serial number, model, manufacture date, template-driven values, lifecycle events, QR/NFC actions | Stacked item cards and one-column form | Related metadata and actions may share rows |
+| Organization profile | Contact fields, logo, Azure Area Path and work-item type; password form | Sections and actions stack | Sections remain readable and bounded |
+| Team members | Technician creation form, initial-password guidance, member status and activation action | One member card per row | Form and list may use wider layout |
+| Public passport | Manufacturer identity, model, serial number, manufacture date, public attributes, public lifecycle events, support contacts and optional ticket form | Optimized for QR entry and one-column reading | Content remains centred; sections may use two columns only when meaningful |
+| Public support tracker | Ticket number when not present in URL, private tracking code, current state, dates, customer-visible conversation, reply form | One-column card with full-width controls | Card remains narrow enough for readable conversation text |
 
 Additional screen rules:
 
@@ -401,6 +414,11 @@ Additional screen rules:
   allowed. Successful creation opens the Draft template detail view.
 - Public passport labels MUST be human-readable. Raw JSON keys and raw URLs are
   not acceptable presentation; links use labels such as “View certification”.
+- AI-extracted values MUST be presented as suggestions with confidence and
+  source information. The user reviews them before applying them to the form.
+- Support comments are public only when the backend accepts their `@customer`
+  marker. The public UI MUST NOT render Azure user identity or untagged internal
+  discussion.
 
 ## 9. Content and language rules
 
@@ -432,12 +450,20 @@ Additional screen rules:
 - Public pages MUST NOT expose biometric templates, access codes, pairing tokens,
   customer locations, private activity logs, internal attack details, or reset
   procedures.
+- Azure PATs, SMTP passwords, Gemini keys, and Cloudinary secrets MUST remain
+  server-side and MUST NOT be represented by `VITE_` variables.
+- The support tracking code MUST be submitted only in the request body and MUST
+  NOT appear in a URL, browser storage, or client log.
+- Support attachments MUST be restricted to the formats and size accepted by
+  the API. Client validation improves feedback but does not replace backend
+  byte-signature validation.
 - CORS is not authorization. JWT, role, ownership, and access-level enforcement
   remain backend responsibilities.
 
 ## 11. Accessibility rules
 
-The MVP targets WCAG 2.2 Level AA.
+The MVP design targets WCAG 2.2 Level AA. This is a design target, not a claim
+of formal accessibility certification.
 
 - Pages MUST use semantic `header`, `nav`, `main`, and `footer` landmarks where
   applicable.

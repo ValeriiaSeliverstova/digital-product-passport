@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2222" height="964" viewBox="0 0 2222 964">
-  <title>Digital Product Passport mobile mockups</title>
-  <desc>Five mobile-first screens: login, template list, create template, template details, and bulk field creation.</desc>
+  <title>Digital Product Passport template-workflow mobile mockups</title>
+  <desc>Early mobile-first reference for five implemented template-workflow screens. The complete current screen inventory is documented in ui-design-guidelines.md.</desc>
 
   <defs>
     <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
@@ -42,8 +42,8 @@
     <text x="62" y="41" class="card-title">Digital Product Passport</text>
 
     <rect x="20" y="166" width="350" height="450" rx="12" class="surface" filter="url(#shadow)" />
-    <text x="40" y="210" class="title">Manufacturer sign in</text>
-    <text x="40" y="237" class="muted">Secure access for registered manufacturers</text>
+    <text x="40" y="210" class="title">Organization sign in</text>
+    <text x="40" y="237" class="muted">Access for administrators and technicians</text>
 
     <text x="40" y="282" class="label">Email</text>
     <rect x="40" y="294" width="310" height="48" rx="8" fill="#FFFFFF" stroke="#2563EB" stroke-width="2" />
@@ -66,7 +66,7 @@
     <rect width="390" height="68" rx="22" fill="#FFFFFF" />
     <rect y="48" width="390" height="20" fill="#FFFFFF" />
     <line x1="0" y1="68" x2="390" y2="68" class="divider" />
-    <text x="20" y="41" class="link">☰ Menu</text>
+    <text x="20" y="41" class="link">DPP</text>
     <text x="195" y="41" text-anchor="middle" class="card-title">Templates</text>
     <text x="370" y="41" text-anchor="end" class="muted">KhersonSafe Ltd.</text>
 
@@ -105,9 +105,9 @@
 
     <rect y="772" width="390" height="72" fill="#FFFFFF" />
     <line x1="0" y1="772" x2="390" y2="772" class="divider" />
-    <text x="65" y="814" text-anchor="middle" class="nav">Dashboard</text>
+    <text x="65" y="814" text-anchor="middle" class="nav">Profile</text>
     <text x="195" y="814" text-anchor="middle" class="nav-active">Templates</text>
-    <text x="325" y="814" text-anchor="middle" class="nav">Products</text>
+    <text x="325" y="814" text-anchor="middle" class="nav">Product items</text>
   </g>
 
   <!-- 03 Create template -->

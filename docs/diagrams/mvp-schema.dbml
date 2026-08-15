@@ -1,6 +1,6 @@
 Table organizations {
   id uuid [pk]
-  name varchar
+  name varchar [not null]
   country varchar
   address_line_1 varchar
   address_line_2 varchar
@@ -9,40 +9,45 @@ Table organizations {
   contact_email varchar
   phone varchar
   website varchar
-  created_at timestamp
+  azure_devops_area_path varchar
+  azure_devops_work_item_type varchar [not null, default: 'Customer Support']
+  logo_public_id varchar
+  logo_url varchar
+  logo_updated_at timestamp
+  created_at timestamp [not null]
+}
+
+Table roles {
+  id uuid [pk]
+  name varchar [not null, unique]
 }
 
 Table users {
   id uuid [pk]
   organization_id uuid [ref: > organizations.id]
   role_id uuid [not null, ref: > roles.id]
-  email varchar [unique]
-  password_hash varchar
-  status varchar
-}
-
-Table roles {
-  id uuid [pk]
-  name varchar [unique]
+  email varchar [not null, unique]
+  password_hash varchar [not null]
+  status varchar [not null, default: 'active']
 }
 
 Table product_categories {
   id uuid [pk]
   parent_category_id uuid [ref: > product_categories.id]
-  code varchar [unique]
-  name varchar
-  is_active boolean
+  code varchar [not null, unique]
+  name varchar [not null]
+  is_active boolean [not null, default: true]
 }
 
 Table passport_templates {
   id uuid [pk]
   template_family_id uuid [not null]
-  organization_id uuid [ref: > organizations.id]
-  category_id uuid [ref: > product_categories.id]
-  name varchar
-  version integer
-  status varchar
-  created_at timestamp
+  organization_id uuid [not null, ref: > organizations.id]
+  category_id uuid [not null, ref: > product_categories.id]
+  name varchar [not null]
+  version integer [not null, default: 1]
+  status varchar [not null, default: 'draft']
+  created_at timestamp [not null]
 
   indexes {
     (template_family_id, version) [unique]
@@ -52,63 +57,88 @@ Table passport_templates {
 
 Table template_fields {
   id uuid [pk]
-  template_id uuid [ref: > passport_templates.id]
-  code varchar
-  label varchar
-  data_type varchar
-  is_required boolean
-  display_order integer
-  access_level varchar
-  validation_rules jsonb
+  template_id uuid [not null, ref: > passport_templates.id]
+  code varchar [not null]
+  label varchar [not null]
+  data_type varchar [not null]
+  is_required boolean [not null, default: false]
+  display_order integer [not null, default: 0]
+  access_level varchar [not null, default: 'public']
+  validation_rules jsonb [not null]
+
+  indexes {
+    (template_id, code) [unique]
+  }
 }
 
 Table product_models {
   id uuid [pk]
-  organization_id uuid [ref: > organizations.id]
-  category_id uuid [ref: > product_categories.id]
-  template_id uuid [ref: > passport_templates.id]
-  model_code varchar
-  name varchar
+  organization_id uuid [not null, ref: > organizations.id]
+  category_id uuid [not null, ref: > product_categories.id]
+  template_id uuid [not null, ref: > passport_templates.id]
+  model_code varchar [not null]
+  name varchar [not null]
   description text
-  status varchar
-  created_at timestamp
+  status varchar [not null, default: 'active']
+  image_public_id varchar
+  image_url varchar
+  image_updated_at timestamp
+  created_at timestamp [not null]
+
+  indexes {
+    (organization_id, model_code) [unique]
+  }
 }
 
 Table product_items {
   id uuid [pk]
-  organization_id uuid [ref: > organizations.id]
-  model_id uuid [ref: > product_models.id]
-  serial_number varchar
-  public_id uuid [unique]
+  organization_id uuid [not null, ref: > organizations.id]
+  model_id uuid [not null, ref: > product_models.id]
+  created_by_user_id uuid [ref: > users.id]
+  serial_number varchar [not null]
+  public_id uuid [not null, unique]
   manufacture_date date
-  status varchar
-  passport_data jsonb
-  created_at timestamp
-  updated_at timestamp
+  status varchar [not null, default: 'draft']
+  passport_data jsonb [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    (organization_id, serial_number) [unique]
+  }
 }
 
 Table lifecycle_events {
   id uuid [pk]
-  item_id uuid [ref: > product_items.id]
-  created_by_user_id uuid [ref: > users.id]
-  event_type varchar
-  occurred_at timestamp
+  item_id uuid [not null, ref: > product_items.id]
+  created_by_user_id uuid [not null, ref: > users.id]
+  event_type varchar [not null]
+  occurred_at timestamp [not null]
   description text
   service_provider varchar
-  access_level varchar
-  event_data jsonb
-  created_at timestamp
+  access_level varchar [not null, default: 'manufacturer']
+  event_data jsonb [not null]
+  created_at timestamp [not null]
 
   indexes {
     (item_id, occurred_at)
   }
 }
 
-Table data_carriers {
+Table support_tickets {
   id uuid [pk]
-  item_id uuid [ref: > product_items.id]
-  carrier_type varchar
-  public_token uuid [unique]
-  status varchar
-  issued_at timestamp
+  organization_id uuid [not null, ref: > organizations.id]
+  product_item_id uuid [not null, ref: > product_items.id]
+  azure_ticket_id integer [not null, unique]
+  idempotency_key varchar [not null]
+  request_fingerprint varchar [not null]
+  subject varchar [not null]
+  tracking_code_hash varchar [not null]
+  tracking_email_sent boolean [not null, default: false]
+  attachment_added boolean [not null, default: false]
+  created_at timestamp [not null]
+
+  indexes {
+    (product_item_id, idempotency_key) [unique]
+  }
 }
