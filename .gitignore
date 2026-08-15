@@ -75,3 +75,9 @@ backend/scripts/create_trello_plan.py
 backend/tests/test_trello_plan.py
 
 AGENTS.md
+
+# Local checklist for deactivating project services after the capstone
+docs/project-shutdown-checklist.md
+
+# Local working bibliography for the diploma
+literature.txt

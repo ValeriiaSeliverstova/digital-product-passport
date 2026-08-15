@@ -1,305 +1,222 @@
-# MVP Scope
+# Implemented MVP Scope
 
-## Goal
+## Purpose
 
-The first version of the system will demonstrate the core Digital Product Passport workflow:
+The capstone MVP demonstrates how a Digital Product Passport can connect a
+manufacturer's installed product base with lifecycle records and an existing
+after-sales support platform. Safe equipment is used as the case study, but the
+configurable template model is not limited to safes.
 
-1. Select a predefined product category.
-2. Create a configurable passport template for that category.
-3. Add template fields.
-4. Register a product model.
-5. Register an individual product item.
-6. Store configurable passport data.
-7. Retrieve and display the product passport.
+The implementation is a proof of concept for one organization-level workflow,
+not a universal DPP interoperability platform or a production service.
 
-## Initial User Roles
+## End-to-end workflow
 
-The MVP will include two main roles:
+1. Reference product categories and roles are seeded.
+2. An organization administrator creates and activates a versioned passport
+   template for an active category.
+3. The administrator creates an active product model tied to one exact active
+   template version.
+4. An administrator or service technician registers a physical product item.
+   This also supports retrospective registration of an already installed item.
+5. Passport values are entered manually or proposed from a PDF/image through
+   Gemini and reviewed by the user.
+6. The item is published after all required template values pass validation.
+7. A customer opens the public passport through its URL, a generated QR code,
+   or a supported NFC tag.
+8. Organization staff append public or restricted lifecycle events.
+9. A customer submits a support ticket from the public passport. The backend
+   creates an Azure DevOps work item and sends a private tracking code by email.
+10. The customer uses the DPP tracking page to view the current Azure status,
+    read support comments explicitly tagged `@customer`, and reply.
 
-### System Administrator
+## Implemented roles and permissions
 
-The system administrator can:
+Each user has exactly one role. Permissions are enforced by the backend and
+organization ownership is derived from the authenticated user.
 
-- manage predefined product categories;
-- activate or deactivate categories;
-- manage system users;
-- view all organizations and products.
+### Organization administrator (`manufacturer_user`)
 
-### Manufacturer User
+Can:
 
-A manufacturer user can:
+- manage the organization's profile, contact data, logo, and Azure DevOps Area
+  Path/work-item type;
+- create, version, activate, and archive passport templates;
+- create and update product models and model images;
+- create, activate, and deactivate service-technician accounts;
+- register, edit, publish, and retire product items;
+- generate item QR codes and add lifecycle events.
 
-- select an existing product category;
-- create passport templates;
-- define template fields;
-- create product models;
-- register individual product items;
-- manage passport data.
+### Service technician (`service_technician`)
 
-## Product Categories
+Can:
 
-Product categories are predefined by the system and managed only by the system administrator.
+- view active templates and active models in the same organization;
+- register draft product items, including historical installed products;
+- use AI-assisted extraction, edit drafts, and publish complete items;
+- view product items and add lifecycle events.
 
-Manufacturers cannot create arbitrary categories. When creating a passport template or product model, they select a category from the available list.
+Cannot manage templates, models, organization settings, team members, or retire
+a published item.
 
-Example category hierarchy:
+### Platform administrator (`system_admin`)
 
-```text
-Industrial Products
-├── Security Equipment
-│   ├── Safes
-│   ├── Vault Doors
-│   └── Deposit Boxes
-├── Machinery
-├── Electronic Equipment
-└── Furniture
-```
+The role exists in reference data and authorization helpers, but platform-level
+administration screens and category-management endpoints are outside the
+implemented MVP. Product categories are currently read-only through the public
+category API and maintained by the seed script.
 
-For the initial case study, the system will include the predefined category:
+## Implemented entities
 
-```text
-Industrial Products
-└── Security Equipment
-    └── Safes
-```
+- `Organization`
+- `User`
+- `Role`
+- `ProductCategory`
+- `PassportTemplate`
+- `TemplateField`
+- `ProductModel`
+- `ProductItem`
+- `LifecycleEvent`
+- `SupportTicket`
 
-## Initial Entities
+QR codes are generated from a product item's existing public identifier and are
+not stored as separate database records. NFC writes the same URL. There is no
+implemented `DataCarrier` table.
 
-The MVP will include the following entities:
-
-- Organization
-- User
-- Role
-- ProductCategory
-- PassportTemplate
-- TemplateField
-- ProductModel
-- ProductItem
-- LifecycleEvent
-- DataCarrier
-
-## Initial Entity Responsibilities
+## Entity responsibilities
 
 ### Organization
 
-Represents a manufacturer or another company registered in the system.
+Represents a manufacturer. It stores contact details, Cloudinary logo metadata,
+and non-secret Azure DevOps routing settings. The Azure PAT and all other
+credentials remain server-side environment settings.
 
-### User
+### User and Role
 
-Represents an authenticated system user with exactly one role.
-
-Manufacturer users must belong to an organization. A platform-level system administrator may have no organization.
-
-### Role
-
-Defines the user's permissions. The initial roles are `system_admin` and `manufacturer_user`.
+Represent an authenticated account and its single permission set. Organization
+administrators and technicians must belong to an organization; a platform
+administrator may have none. Active status is checked on every authenticated
+request.
 
 ### ProductCategory
 
-Represents a predefined system-managed category of industrial products.
+Represents a seeded hierarchical product classification. Implemented public
+endpoints return a flat collection containing `parent_category_id`, allowing a
+client to construct the hierarchy.
 
-Categories may support a hierarchical structure through a parent category.
+### PassportTemplate and TemplateField
 
-### PassportTemplate
+One template row represents one exact version. All versions in a family share
+`template_family_id`. A family may contain at most one Draft. Draft field
+definitions are editable; Active and Archived definitions are immutable. A new
+version copies the latest completed version and its fields into a new Draft.
 
-Defines the configurable structure of a Digital Product Passport for a selected product category.
-
-A manufacturer may create multiple templates for the same category.
-
-Each template may have multiple versions. Every version has a unique `id`, and
-all versions in the same family share a stable `template_family_id`. The family
-name is editable metadata and is kept consistent across its versions.
-
-New templates start as Draft. Activating a version locks its fields. A new
-version copies the latest completed version and its fields into the next Draft
-version; only one Draft is allowed per family.
-
-Example:
-
-```text
-Category: Safes
-
-Templates:
-- Mechanical Safe Passport
-- Electronic Safe Passport
-- High-Security Safe Passport
-```
-
-### TemplateField
-
-Defines an individual configurable field within a passport template.
-
-A template field may include:
-
-- field name;
-- field code;
-- data type;
-- required or optional status;
-- validation rules;
-- display order;
-- access level.
+Supported field types are text, integer, decimal, boolean, and date. Fields can
+be required or optional and public or manufacturer-only, with type-specific
+validation rules.
 
 ### ProductModel
 
-Represents a product design or commercial model.
-
-Example:
-
-```text
-Model: SecureSafe 500
-Description: Compact safe designed for homes and small offices
-Category: Safes
-Template: Electronic Safe Passport
-```
-
-The optional description contains general information shared by every physical
-item of the product model.
-
-A product model uses one exact Active template version. Its `model_code` is
-unique within the manufacturer organization, and its status is either `active`
-or `archived`.
+Represents a commercial product model owned by one organization. It references
+one exact active template version and category. Its model code is unique inside
+the organization. Name, description, status, and optional Cloudinary image can
+be managed after creation, while ownership, code, category, and template remain
+fixed.
 
 ### ProductItem
 
-Represents a specific physical product with its own serial number and Digital Product Passport.
+Represents one physical product. Its serial number is unique inside the
+organization and its random `public_id` is used in the public passport URL.
+Configurable values are stored as JSONB and validated against the product
+model's exact template version.
 
-Items begin as Draft so incomplete data can be saved. Publishing requires all
-required template fields. Published items cannot change their identity or
-passport values; they may only move to Retired.
+Items follow the one-way lifecycle:
+
+```text
+Draft -> Published -> Retired
+```
+
+Drafts can be incomplete. Publishing requires every required field. Published
+identity and passport values are immutable; only an organization administrator
+can retire the item.
 
 ### LifecycleEvent
 
-Represents a dated event in the lifecycle of a product item, such as
-manufacturing, installation, inspection, maintenance, repair, certification,
-or retirement. Each event records its creating user and is either public or
-visible only to the manufacturer.
+Records manufacturing, installation, inspection, maintenance, repair,
+certification, retirement, or another event for a published/retired product.
+Every new event records its creator and access level. Only public events are
+included in the public passport.
 
-### DataCarrier
+### SupportTicket
 
-Represents a QR code, NFC tag, or another carrier connected to a product item.
+Stores the link between a product item and its Azure DevOps work-item number,
+idempotency metadata, a one-way hash of the private tracking code, and delivery
+state. The complete work-item status and conversation remain in Azure DevOps
+and are loaded on demand.
 
-## Initial Relationships
+## Main business rules
 
-- An organization can have multiple users.
-- Each user has exactly one role.
-- A role can be assigned to multiple users.
-- A manufacturer user belongs to one organization.
-- A system administrator may have no organization.
-- A product category can contain child categories.
-- A product category can have multiple passport templates.
-- A passport template belongs to one organization.
-- Each passport template row is one version and belongs to one template family.
-- A template family can contain multiple ordered versions.
-- A passport template contains multiple template fields.
-- A product model belongs to one product category.
-- A product model uses one passport template.
-- A product model can have multiple product items.
-- A product item can have multiple lifecycle events.
-- A product item can have multiple data carriers.
+1. All organization-owned queries enforce the current user's organization.
+2. A product model must use an active category and an active template belonging
+   to the same organization and category.
+3. Only Draft template fields can be changed.
+4. One template family can contain no more than one Draft version.
+5. Product serial numbers and model codes are unique per organization.
+6. Only Published product items are returned by the public passport API.
+7. Public responses contain only public template fields and public lifecycle
+   events; restricted values are filtered on the server.
+8. QR and NFC payloads contain only the public passport URL.
+9. AI extraction returns reviewable suggestions and never modifies a product
+   item automatically.
+10. Public support submission requires an idempotency key and is protected by a
+    short in-process rate limit.
+11. One optional support attachment must be PNG, JPEG, or WebP and no larger
+    than 5 MB; its byte signature is checked before upload to Azure DevOps.
+12. Ticket tracking requires both the Azure ticket number and the emailed
+    private code. Only Azure comments beginning with `@customer` are shown.
 
-## First Implementation Flow
+## API surface
 
-```text
-System Administrator
-        ↓
-Manage Predefined Product Categories
+FastAPI also provides `GET /health` and interactive OpenAPI documentation at
+`/docs`.
 
-Manufacturer
-        ↓
-Select Product Category
-        ↓
-Create Passport Template
-        ↓
-Add Template Fields
-        ↓
-Create Product Model
-        ↓
-Create Product Item
-        ↓
-Store Passport Data
-        ↓
-Retrieve Product Passport
-```
-
-## MVP Business Rules
-
-1. Only system administrators can create, update, deactivate, or reorder product categories.
-
-2. Manufacturers must select an existing active category.
-
-3. Each passport template belongs to one organization and one product category.
-
-4. A manufacturer may create multiple passport templates for the same category.
-
-4a. Versions of one template share a stable `template_family_id`; only Draft
-versions may change fields.
-
-5. A product model must use a template assigned to the same category.
-
-6. Each product item must belong to one product model.
-
-7. Each product item must have a unique serial number within its manufacturer.
-
-8. Each product item receives a unique public identifier.
-
-9. QR codes and NFC tags contain only a URL
-
-10. Product-specific passport data must comply with the selected template.
-
-## Planned Backend Setup
-
-- Python
-- FastAPI
-- SQLAlchemy
-- Alembic
-- PostgreSQL
-- Pydantic
-- Environment-based configuration
-
-## Planned First API Endpoints
-
-### Authentication and users
+### Authentication and current user
 
 ```text
 POST /api/auth/login
 GET  /api/users/me
+PUT  /api/users/me/password
 ```
 
-### Product categories
+### Categories and organization
 
 ```text
-GET  /api/categories
-GET  /api/categories/{id}
+GET    /api/categories
+GET    /api/categories/{category_id}
+PUT    /api/organizations/me
+PUT    /api/organizations/me/logo
+DELETE /api/organizations/me/logo
+GET    /api/organizations/{organization_id}/logo
 ```
 
-Category creation and modification endpoints will be restricted to system administrators:
+### Organization technicians
 
 ```text
-POST   /api/admin/categories
-PUT    /api/admin/categories/{id}
-DELETE /api/admin/categories/{id}
+GET  /api/organizations/me/team-members
+POST /api/organizations/me/team-members
+PUT  /api/organizations/me/team-members/{member_id}
 ```
 
-Deletion may be implemented as deactivation rather than permanent removal.
-
-### Passport templates
+### Passport templates and fields
 
 ```text
-POST /api/templates
-GET  /api/templates
-GET  /api/templates/{id}
-PUT  /api/templates/{id}
-POST /api/templates/{id}/versions
-```
-
-The version endpoint copies the latest Active or Archived version and its
-fields into the next Draft version. It rejects older source versions and
-families that already contain a Draft.
-
-### Template fields
-
-```text
-POST   /api/templates/{id}/fields
+POST   /api/templates
+GET    /api/templates
+GET    /api/templates/families
+GET    /api/templates/{template_id}
+PUT    /api/templates/{template_id}
+POST   /api/templates/{template_id}/versions
+POST   /api/templates/{template_id}/fields
 PUT    /api/templates/{template_id}/fields/{field_id}
 DELETE /api/templates/{template_id}/fields/{field_id}
 ```
@@ -307,69 +224,72 @@ DELETE /api/templates/{template_id}/fields/{field_id}
 ### Product models
 
 ```text
-POST /api/product-models
-GET  /api/product-models
-GET  /api/product-models/{id}
-PUT  /api/product-models/{id}
+POST   /api/product-models
+GET    /api/product-models
+GET    /api/product-models/page
+GET    /api/product-models/{model_id}
+PUT    /api/product-models/{model_id}
+PUT    /api/product-models/{model_id}/image
+DELETE /api/product-models/{model_id}/image
+GET    /api/product-models/{model_id}/image
+POST   /api/product-models/{model_id}/ai-extraction
 ```
 
-Only the name, optional description, and status can be updated. Organization,
-category, template version, and model code remain fixed after creation.
+The AI endpoint accepts one PDF, JPEG, PNG, WebP, HEIC, or HEIF source of at
+most 10 MB and returns locally validated suggestions.
 
-### Product items
+### Product items and lifecycle events
 
 ```text
 POST /api/product-items
 GET  /api/product-items
-GET  /api/product-items/{id}
-PUT  /api/product-items/{id}
-GET  /api/product-items/{id}/qr-code
-GET  /api/passports/{public_id}
+GET  /api/product-items/{item_id}
+PUT  /api/product-items/{item_id}
+GET  /api/product-items/{item_id}/qr-code
+POST /api/product-items/{item_id}/lifecycle-events
+GET  /api/product-items/{item_id}/lifecycle-events
 ```
 
-The manufacturer endpoints require authentication and return only items owned
-by the user's organization. The public passport endpoint requires no login and
-returns only Published products and fields marked for public access. Draft,
-Retired, and unknown passports return the same Not Found response.
-
-The protected QR endpoint generates a fresh printable SVG for an owned
-Published item whenever requested. The image is not stored in the database and
-contains only the frontend public-passport URL.
-
-## Initial Seed Data
-
-The database should contain initial system-managed seed data.
-
-Example:
+### Public passport and support
 
 ```text
-Industrial Products
-└── Security Equipment
-    ├── Safes
-    ├── Vault Doors
-    └── Deposit Boxes
+GET  /api/passports/{public_id}
+POST /api/passports/{public_id}/support-tickets
+POST /api/support-tickets/{ticket_id}/track
+POST /api/support-tickets/{ticket_id}/comments
 ```
 
-Additional seed data may include:
+Support-ticket creation is enabled only when Azure DevOps routing, server-side
+PAT, and SMTP settings are configured.
 
-- one system administrator;
-- one manufacturer organization;
-- one manufacturer user;
-- one safe passport template;
-- several template fields;
-- one safe product model;
-- one product item.
+## External services
 
-## MVP Success Criteria
+- **Azure DevOps** stores and processes customer support work items,
+  attachments, states, and comments.
+- **SMTP** sends the private ticket tracking code and DPP tracking link.
+- **Cloudinary** stores organization logos and product-model images.
+- **Gemini** proposes structured passport values from uploaded documents.
 
-The MVP is considered successful when:
+Failures from external services are converted into controlled API errors. The
+prototype uses request timeouts and idempotent ticket retries, but does not have
+a background queue, distributed retries, webhooks, or a local ticket-status
+cache.
 
-1. A system administrator can manage predefined categories.
-2. A manufacturer can select an active category.
-3. A manufacturer can create a configurable passport template.
-4. Template fields can be added without changing the database schema.
-5. A product model can be linked to the selected category and template.
-6. A physical product item can be registered with a serial number.
-7. Product-specific passport data can be stored and validated.
-8. A passport can be retrieved through its public identifier.
-9. The same core system can support another product category by creating a different template.
+## Verification status
+
+The tracked backend suite currently has 117 pytest tests covering unit-level rules and
+API-level workflows with an isolated in-memory SQLite database. External
+services are replaced with test doubles. Frontend lint and production build
+checks are implemented; automated frontend component and end-to-end tests are
+not.
+
+## Explicitly outside the current MVP
+
+- platform-administrator and category-management UI/API;
+- a universal CRM, ERP, or PLM connector;
+- a persisted registry of QR/NFC carriers;
+- customer accounts and a customer ticket list;
+- antivirus scanning and document sandboxing;
+- distributed rate limiting, background jobs, and automatic retry workers;
+- production monitoring, formal accessibility certification, load testing, and
+  penetration testing.
