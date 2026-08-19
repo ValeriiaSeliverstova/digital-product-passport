@@ -27,8 +27,12 @@ not a universal DPP interoperability platform or a production service.
 8. Organization staff append public or restricted lifecycle events.
 9. A customer submits a support ticket from the public passport. The backend
    creates an Azure DevOps work item and sends a private tracking code by email.
-10. The customer uses the DPP tracking page to view the current Azure status,
-    read support comments explicitly tagged `@customer`, and reply.
+10. The public passport provides a generic tracking action but reveals no
+    ticket number, count, date, status, or message before verification.
+11. The customer enters the ticket number and private code from email to open a
+    ticket, read customer-visible support comments, and reply while it remains
+    open. When tracking starts from a passport, the backend additionally checks
+    that the ticket belongs to that product.
 
 ## Implemented roles and permissions
 
@@ -174,6 +178,10 @@ and are loaded on demand.
     than 5 MB; its byte signature is checked before upload to Azure DevOps.
 12. Ticket tracking requires both the Azure ticket number and the emailed
     private code. Only Azure comments beginning with `@customer` are shown.
+13. A Closed Azure ticket remains available for tracking but cannot receive new
+    customer messages through either the UI or API.
+14. The public passport does not provide a ticket-list endpoint. Failed ticket,
+    code, and product-context checks return the same generic response.
 
 ## API surface
 
@@ -277,7 +285,7 @@ cache.
 
 ## Verification status
 
-The tracked backend suite currently has 117 pytest tests covering unit-level rules and
+The tracked backend suite currently has 121 pytest tests covering unit-level rules and
 API-level workflows with an isolated in-memory SQLite database. External
 services are replaced with test doubles. Frontend lint and production build
 checks are implemented; automated frontend component and end-to-end tests are

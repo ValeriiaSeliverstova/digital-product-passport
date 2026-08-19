@@ -20,6 +20,13 @@ class AzureDevOpsRequestError(RuntimeError):
 
 CUSTOMER_COMMENT_PREFIX = "**Customer reply via DPP:**\n\n"
 SUPPORT_COMMENT_TAG = "@customer"
+CLOSED_WORK_ITEM_STATE = "closed"
+
+
+def is_closed_support_work_item(state: str) -> bool:
+    """Return whether Azure reports the terminal Closed state."""
+
+    return state.strip().casefold() == CLOSED_WORK_ITEM_STATE
 
 
 def _authorization_header() -> str:

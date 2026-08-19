@@ -110,7 +110,9 @@ function PublicPassportPage({ publicId }) {
   const [passport, setPassport] = useState(null)
   const [loadState, setLoadState] = useState('loading')
   const [reloadKey, setReloadKey] = useState(0)
-  const [showTicketForm, setShowTicketForm] = useState(false)
+  const [showTicketForm, setShowTicketForm] = useState(
+    new URLSearchParams(window.location.search).get('support') === 'new',
+  )
   const [ticketForm, setTicketForm] = useState({
     requester_name: '',
     requester_email: '',
@@ -359,7 +361,7 @@ function PublicPassportPage({ publicId }) {
               passport.support_email ||
               passport.support_phone ||
               passport.support_website) && (
-              <section className={styles.detailsCard}>
+              <section className={styles.detailsCard} id="support">
                 <div className={styles.sectionHeading}>
                   <div>
                     <h2>Contact support</h2>
@@ -409,30 +411,36 @@ function PublicPassportPage({ publicId }) {
                     </a>
                   )}
                   {passport.support_ticket_enabled && (
-                    <>
-                      <button
-                        className={styles.supportLink}
-                        type="button"
-                        onClick={() => setShowTicketForm((visible) => !visible)}
-                        aria-expanded={showTicketForm}
-                        aria-controls="support-ticket-form"
-                      >
-                        <SupportIcon type="ticket" />
-                        <span className={styles.supportText}>
-                          <strong>Submit a ticket</strong>
-                          <span>Send product details with your request</span>
-                        </span>
-                      </button>
-                      <a className={styles.supportLink} href="/support-ticket">
-                        <SupportIcon type="ticket" />
-                        <span className={styles.supportText}>
-                          <strong>Track a ticket</strong>
-                          <span>Use your ticket number and private code</span>
-                        </span>
-                      </a>
-                    </>
+                    <button
+                      className={styles.supportLink}
+                      type="button"
+                      onClick={() => setShowTicketForm((visible) => !visible)}
+                      aria-expanded={showTicketForm}
+                      aria-controls="support-ticket-form"
+                    >
+                      <SupportIcon type="ticket" />
+                      <span className={styles.supportText}>
+                        <strong>Submit a ticket</strong>
+                        <span>Send product details with your request</span>
+                      </span>
+                    </button>
                   )}
                 </div>
+
+                <section className={styles.trackRequest}>
+                  <h3>Already submitted a support request?</h3>
+                  <p>
+                    Use the ticket number and private tracking code from your
+                    support email.
+                  </p>
+                  <a
+                    href={`/support-ticket?product=${encodeURIComponent(
+                      passport.public_id,
+                    )}`}
+                  >
+                    Track support request
+                  </a>
+                </section>
 
                 {showTicketForm && (
                   <form
