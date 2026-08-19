@@ -23,7 +23,9 @@ after-sales support process. Safe equipment is the primary case study.
 - the public passport exposes no existing ticket information. Customers enter
   the ticket number and private code from email to open a request, track its
   live status and customer-visible comments, and reply. Closed tickets are
-  read-only.
+  read-only;
+- active organization users can request a single-use password reset link by
+  email without revealing whether an account exists.
 
 ## Technology stack
 
@@ -118,7 +120,7 @@ cd backend
 .venv/bin/python -m pytest
 ```
 
-The tracked suite contains 121 unit and API-level integration tests. External
+The tracked suite contains 132 unit and API-level integration tests. External
 Azure DevOps, SMTP, Cloudinary, and Gemini calls are replaced with test doubles
 where applicable.
 

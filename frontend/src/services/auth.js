@@ -17,6 +17,28 @@ export function login(email, password) {
   })
 }
 
+/** Request reset instructions without exposing whether the account exists. */
+export function forgotPassword(email) {
+  return apiRequest('/api/auth/forgot-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email: email.trim() }),
+  })
+}
+
+/** Replace a password using the private token from the reset email. */
+export function resetPassword(token, newPassword) {
+  return apiRequest('/api/auth/reset-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token, new_password: newPassword }),
+  })
+}
+
 /** Load the safe user profile associated with an access token. */
 export function getCurrentUser(accessToken) {
   return apiRequest('/api/users/me', { token: accessToken })

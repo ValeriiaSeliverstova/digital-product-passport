@@ -76,6 +76,9 @@ function LoginPage({ onLogin }) {
                   {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
+              <a className={styles.forgotLink} href="/forgot-password">
+                Forgot password?
+              </a>
             </div>
 
             {error && (

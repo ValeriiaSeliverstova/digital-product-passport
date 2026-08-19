@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -25,6 +27,18 @@ def verify_password(password: str, password_hash: str) -> bool:
     """Verify a plain password against its stored Argon2 hash."""
 
     return password_hasher.verify(password, password_hash)
+
+
+def create_password_reset_token() -> str:
+    """Create a high-entropy token suitable for a password reset URL."""
+
+    return secrets.token_urlsafe(32)
+
+
+def hash_password_reset_token(token: str) -> str:
+    """Create the deterministic digest stored instead of the raw reset token."""
+
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def create_access_token(user_id: UUID) -> str:

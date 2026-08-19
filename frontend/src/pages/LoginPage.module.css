@@ -70,6 +70,11 @@
   gap: var(--space-1);
 }
 
+.forgotLink {
+  justify-self: end;
+  font-size: var(--font-size-small);
+}
+
 .passwordControl {
   position: relative;
 }
@@ -98,6 +103,28 @@
   background: var(--color-error-bg);
   border-radius: var(--radius-control);
   font-size: var(--font-size-small);
+}
+
+.success {
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-small);
+}
+
+.secondaryLink {
+  display: inline-flex;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-4);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
 }
 
 .submitButton {

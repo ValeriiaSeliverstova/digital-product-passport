@@ -11,7 +11,7 @@ class EmailNotConfiguredError(RuntimeError):
 
 
 class EmailDeliveryError(RuntimeError):
-    """The SMTP server could not deliver a tracking email."""
+    """The SMTP server could not deliver an application email."""
 
 
 def tracking_email_is_configured() -> bool:
@@ -25,6 +25,48 @@ def tracking_email_is_configured() -> bool:
             settings.smtp_from_email,
         ),
     )
+
+
+def _send_email(message: EmailMessage) -> None:
+    """Deliver an application email with the existing SMTP configuration."""
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(
+            settings.smtp_host,
+            settings.smtp_port,
+            context=context,
+            timeout=10,
+        ) as smtp:
+            smtp.login(
+                settings.smtp_username,
+                settings.smtp_password.get_secret_value(),
+            )
+            smtp.send_message(message)
+    except (OSError, smtplib.SMTPException) as error:
+        raise EmailDeliveryError from error
+
+
+def send_password_reset_email(*, recipient: str, reset_token: str) -> None:
+    """Send a short password reset link without logging or storing the token."""
+
+    if not tracking_email_is_configured():
+        raise EmailNotConfiguredError
+
+    reset_url = f"{settings.frontend_origin}/reset-password?token={reset_token}"
+    message = EmailMessage()
+    message["Subject"] = "Reset your Digital Product Passport password"
+    message["From"] = settings.smtp_from_email
+    message["To"] = recipient
+    message.set_content(
+        "A password reset was requested for your Digital Product Passport "
+        "account.\n\n"
+        f"Reset your password: {reset_url}\n\n"
+        "This link expires in 30 minutes and can be used once. If you did not "
+        "request this change, you can ignore this email."
+    )
+
+    _send_email(message)
 
 
 def send_tracking_email(
@@ -175,18 +217,4 @@ def send_tracking_email(
         subtype="html",
     )
 
-    try:
-        context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(
-            settings.smtp_host,
-            settings.smtp_port,
-            context=context,
-            timeout=10,
-        ) as smtp:
-            smtp.login(
-                settings.smtp_username,
-                settings.smtp_password.get_secret_value(),
-            )
-            smtp.send_message(message)
-    except (OSError, smtplib.SMTPException) as error:
-        raise EmailDeliveryError from error
+    _send_email(message)

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 
 import CreateTemplatePage from './pages/CreateTemplatePage.jsx'
 import EditTemplatePage from './pages/EditTemplatePage.jsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import ProductItemFormPage from './pages/ProductItemFormPage.jsx'
@@ -10,6 +11,7 @@ import ProductModelFormPage from './pages/ProductModelFormPage.jsx'
 import ProductModelListPage from './pages/ProductModelListPage.jsx'
 import PublicPassportPage from './pages/PublicPassportPage.jsx'
 import PublicSupportTicketPage from './pages/PublicSupportTicketPage.jsx'
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import TemplateListPage from './pages/TemplateListPage.jsx'
 import TeamMemberPage from './pages/TeamMemberPage.jsx'
 import { getCurrentUser, login } from './services/auth.js'
@@ -32,6 +34,12 @@ function App() {
   )
   const publicSupportTicketId = publicSupportTicketMatch?.[1]
   const isPublicSupportTracker = /^\/support-ticket\/?$/.test(
+    window.location.pathname,
+  )
+  const isForgotPasswordPage = /^\/forgot-password\/?$/.test(
+    window.location.pathname,
+  )
+  const isResetPasswordPage = /^\/reset-password\/?$/.test(
     window.location.pathname,
   )
 
@@ -92,6 +100,14 @@ function App() {
 
   if (publicSupportTicketId || isPublicSupportTracker) {
     return <PublicSupportTicketPage ticketId={publicSupportTicketId} />
+  }
+
+  if (isForgotPasswordPage) {
+    return <ForgotPasswordPage />
+  }
+
+  if (isResetPasswordPage) {
+    return <ResetPasswordPage />
   }
 
   if (!accessToken || !currentUser) {

@@ -74,6 +74,7 @@ category API and maintained by the seed script.
 
 - `Organization`
 - `User`
+- `PasswordResetToken`
 - `Role`
 - `ProductCategory`
 - `PassportTemplate`
@@ -101,6 +102,12 @@ Represent an authenticated account and its single permission set. Organization
 administrators and technicians must belong to an organization; a platform
 administrator may have none. Active status is checked on every authenticated
 request.
+
+### PasswordResetToken
+
+Stores a one-way hash of a temporary password-reset credential together with
+its user, expiry time, and consumption time. Raw tokens exist only long enough
+to be placed in the email link and are never persisted.
 
 ### ProductCategory
 
@@ -182,6 +189,9 @@ and are loaded on demand.
     customer messages through either the UI or API.
 14. The public passport does not provide a ticket-list endpoint. Failed ticket,
     code, and product-context checks return the same generic response.
+15. Password reset links expire after 30 minutes and are single-use. Only a
+    SHA-256 token digest is stored, and forgot-password responses do not reveal
+    whether an active account exists.
 
 ## API surface
 
@@ -192,6 +202,8 @@ FastAPI also provides `GET /health` and interactive OpenAPI documentation at
 
 ```text
 POST /api/auth/login
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
 GET  /api/users/me
 PUT  /api/users/me/password
 ```
@@ -274,7 +286,7 @@ PAT, and SMTP settings are configured.
 
 - **Azure DevOps** stores and processes customer support work items,
   attachments, states, and comments.
-- **SMTP** sends the private ticket tracking code and DPP tracking link.
+- **SMTP** sends ticket tracking details and account password-reset links.
 - **Cloudinary** stores organization logos and product-model images.
 - **Gemini** proposes structured passport values from uploaded documents.
 
@@ -285,7 +297,7 @@ cache.
 
 ## Verification status
 
-The tracked backend suite currently has 121 pytest tests covering unit-level rules and
+The tracked backend suite currently has 132 pytest tests covering unit-level rules and
 API-level workflows with an isolated in-memory SQLite database. External
 services are replaced with test doubles. Frontend lint and production build
 checks are implemented; automated frontend component and end-to-end tests are
