@@ -18,6 +18,9 @@ function formatDateTime(value) {
 }
 
 function PublicSupportTicketPage({ ticketId }) {
+  const productPublicId = new URLSearchParams(window.location.search).get(
+    'product',
+  )
   const [ticketNumber, setTicketNumber] = useState(ticketId || '')
   const [trackingCode, setTrackingCode] = useState('')
   const [ticket, setTicket] = useState(null)
@@ -33,14 +36,18 @@ function PublicSupportTicketPage({ ticketId }) {
 
     try {
       setTicket(
-        await trackSupportTicket(ticketNumber.trim(), trackingCode.trim()),
+        await trackSupportTicket(
+          ticketNumber.trim(),
+          trackingCode.trim(),
+          productPublicId,
+        ),
       )
     } catch (requestError) {
       setTicket(null)
       setError(
         requestError instanceof ApiError && requestError.status === 404
-          ? 'The ticket number or tracking code is incorrect.'
-          : 'The ticket status could not be loaded. Please try again.',
+          ? 'Ticket number or tracking code is invalid.'
+          : 'The support request could not be loaded. Please try again.',
       )
     } finally {
       setIsLoading(false)
@@ -62,11 +69,19 @@ function PublicSupportTicketPage({ ticketId }) {
         ticketNumber.trim(),
         trackingCode.trim(),
         reply.trim(),
+        productPublicId,
       )
       setReply('')
       await loadTicketStatus()
-    } catch {
-      setReplyError('Your reply could not be sent. Please try again.')
+    } catch (requestError) {
+      if (requestError instanceof ApiError && requestError.status === 409) {
+        setTicket((current) => (
+          current ? { ...current, status: 'Closed', is_closed: true } : current
+        ))
+        setReplyError('This ticket is closed and cannot receive new messages.')
+      } else {
+        setReplyError('Your reply could not be sent. Please try again.')
+      }
     } finally {
       setIsSendingReply(false)
     }
@@ -84,10 +99,12 @@ function PublicSupportTicketPage({ ticketId }) {
       <main className={styles.main}>
         <section className={styles.card}>
           <h1>
-            {ticketId ? `Track support ticket #${ticketId}` : 'Track a support ticket'}
+            {ticketId
+              ? `Track support request #${ticketId}`
+              : 'Track support request'}
           </h1>
           <p className={styles.introduction}>
-            Enter the ticket details sent to your email address.
+            Enter the ticket number and tracking code from your support email.
           </p>
 
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -119,7 +136,7 @@ function PublicSupportTicketPage({ ticketId }) {
             />
             {error && <p className={styles.error} role="alert">{error}</p>}
             <button type="submit" disabled={isLoading}>
-              {isLoading ? 'Loading…' : 'View ticket status'}
+              {isLoading ? 'Loading…' : 'View request'}
             </button>
           </form>
 
@@ -134,10 +151,16 @@ function PublicSupportTicketPage({ ticketId }) {
                   <dt>Submitted</dt>
                   <dd>{formatDateTime(ticket.submitted_at)}</dd>
                 </div>
-                {ticket.updated_at && (
+                {ticket.updated_at && !ticket.is_closed && (
                   <div>
                     <dt>Last updated</dt>
                     <dd>{formatDateTime(ticket.updated_at)}</dd>
+                  </div>
+                )}
+                {ticket.closed_at && (
+                  <div>
+                    <dt>Closed</dt>
+                    <dd>{formatDateTime(ticket.closed_at)}</dd>
                   </div>
                 )}
               </dl>
@@ -155,8 +178,8 @@ function PublicSupportTicketPage({ ticketId }) {
                 <h3>Conversation</h3>
                 {ticket.comments.length === 0 ? (
                   <p className={styles.emptyConversation}>
-                    No replies yet. Support comments tagged with @customer in
-                    Azure DevOps will appear here after refresh.
+                    No replies yet. New messages from support will appear here
+                    after refresh.
                   </p>
                 ) : (
                   <ol className={styles.commentList}>
@@ -179,23 +202,37 @@ function PublicSupportTicketPage({ ticketId }) {
                   </ol>
                 )}
 
-                <form className={styles.replyForm} onSubmit={handleReply}>
-                  <label htmlFor="ticket-reply">Reply to support</label>
-                  <textarea
-                    id="ticket-reply"
-                    maxLength={2000}
-                    rows={4}
-                    value={reply}
-                    onChange={(event) => setReply(event.target.value)}
-                    required
-                  />
-                  {replyError && (
-                    <p className={styles.error} role="alert">{replyError}</p>
-                  )}
-                  <button type="submit" disabled={isSendingReply}>
-                    {isSendingReply ? 'Sending…' : 'Send reply'}
-                  </button>
-                </form>
+                {ticket.is_closed ? (
+                  <div className={styles.closedActions}>
+                    <p className={styles.closedNotice}>
+                      This support request is closed. Its history remains
+                      available, but new messages cannot be sent.
+                    </p>
+                    <a
+                      href={`/passport/${ticket.product_public_id}?support=new#support`}
+                    >
+                      Create new support request
+                    </a>
+                  </div>
+                ) : (
+                  <form className={styles.replyForm} onSubmit={handleReply}>
+                    <label htmlFor="ticket-reply">Reply to support</label>
+                    <textarea
+                      id="ticket-reply"
+                      maxLength={2000}
+                      rows={4}
+                      value={reply}
+                      onChange={(event) => setReply(event.target.value)}
+                      required
+                    />
+                    {replyError && (
+                      <p className={styles.error} role="alert">{replyError}</p>
+                    )}
+                    <button type="submit" disabled={isSendingReply}>
+                      {isSendingReply ? 'Sending…' : 'Send reply'}
+                    </button>
+                  </form>
+                )}
               </section>
             </div>
           )}

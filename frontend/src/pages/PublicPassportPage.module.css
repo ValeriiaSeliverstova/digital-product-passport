@@ -308,6 +308,38 @@
   font-weight: var(--font-weight-normal);
 }
 
+.trackRequest {
+  display: grid;
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-6);
+  justify-items: start;
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.trackRequest h3,
+.trackRequest p {
+  margin: 0;
+}
+
+.trackRequest p {
+  color: var(--color-text-muted);
+}
+
+.trackRequest a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  margin-block-start: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  align-items: center;
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+
 .publicId {
   margin: 0;
   color: var(--color-text-muted);

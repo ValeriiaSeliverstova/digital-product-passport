@@ -20,8 +20,10 @@ after-sales support process. Safe equipment is the primary case study.
 - customers submit Azure DevOps support tickets from the public passport,
   optionally attach one validated image, and receive a private tracking code by
   email;
-- customers track the live Azure status and tagged support comments on the DPP
-  site and can reply without being sent to Azure DevOps.
+- the public passport exposes no existing ticket information. Customers enter
+  the ticket number and private code from email to open a request, track its
+  live status and customer-visible comments, and reply. Closed tickets are
+  read-only.
 
 ## Technology stack
 
@@ -116,7 +118,7 @@ cd backend
 .venv/bin/python -m pytest
 ```
 
-The tracked suite contains 117 unit and API-level integration tests. External
+The tracked suite contains 121 unit and API-level integration tests. External
 Azure DevOps, SMTP, Cloudinary, and Gemini calls are replaced with test doubles
 where applicable.
 

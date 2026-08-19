@@ -49,7 +49,10 @@ from app.schemas.public_passport import (
     PublicPassportField,
     PublicPassportResponse,
 )
-from app.schemas.support_ticket import SupportTicketCreate, SupportTicketResponse
+from app.schemas.support_ticket import (
+    SupportTicketCreate,
+    SupportTicketResponse,
+)
 from app.support_ticket_protection import (
     IdempotencyConflictError,
     IdempotencyInProgressError,

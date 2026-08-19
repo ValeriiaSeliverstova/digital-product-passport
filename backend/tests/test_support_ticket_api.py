@@ -114,6 +114,19 @@ def test_support_ticket_requires_a_published_passport(
     assert unknown_response.status_code == 404
 
 
+def test_public_passport_does_not_expose_existing_ticket_list(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    product_item = create_passport(db_session)
+
+    response = client.get(
+        f"/api/passports/{product_item.public_id}/support-tickets",
+    )
+
+    assert response.status_code == 405
+
+
 def test_support_ticket_reports_safe_configuration_and_upstream_errors(
     client: TestClient,
     db_session: Session,

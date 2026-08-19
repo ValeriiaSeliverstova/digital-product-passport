@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -39,6 +40,7 @@ class SupportTicketTrackRequest(BaseModel):
     """Private code sent to the customer after ticket creation."""
 
     tracking_code: str = Field(min_length=16, max_length=64)
+    product_public_id: UUID | None = None
 
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
@@ -64,6 +66,9 @@ class SupportTicketStatusResponse(BaseModel):
     ticket_id: int
     subject: str
     status: str
+    is_closed: bool
     submitted_at: datetime
     updated_at: datetime | None
+    closed_at: datetime | None
+    product_public_id: UUID
     comments: list[SupportTicketCommentResponse]

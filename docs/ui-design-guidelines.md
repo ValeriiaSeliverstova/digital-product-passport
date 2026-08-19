@@ -402,7 +402,7 @@ tokens and component rules.
 | Product-item list/form | Search, status/date filters, pagination, serial number, model, manufacture date, template-driven values, lifecycle events, QR/NFC actions | Stacked item cards and one-column form | Related metadata and actions may share rows |
 | Organization profile | Contact fields, logo, Azure Area Path and work-item type; password form | Sections and actions stack | Sections remain readable and bounded |
 | Team members | Technician creation form, initial-password guidance, member status and activation action | One member card per row | Form and list may use wider layout |
-| Public passport | Manufacturer identity, model, serial number, manufacture date, public attributes, public lifecycle events, support contacts and optional ticket form | Optimized for QR entry and one-column reading | Content remains centred; sections may use two columns only when meaningful |
+| Public passport | Manufacturer identity, model, serial number, manufacture date, public attributes, public lifecycle events, support contacts, new-ticket form and generic tracking action | Optimized for QR entry and one-column reading | Content remains centred; sections may use two columns only when meaningful |
 | Public support tracker | Ticket number when not present in URL, private tracking code, current state, dates, customer-visible conversation, reply form | One-column card with full-width controls | Card remains narrow enough for readable conversation text |
 
 Additional screen rules:
@@ -419,6 +419,10 @@ Additional screen rules:
 - Support comments are public only when the backend accepts their `@customer`
   marker. The public UI MUST NOT render Azure user identity or untagged internal
   discussion.
+- The public passport MUST NOT reveal existing ticket numbers, counts, dates,
+  statuses, subjects, or messages. Tracking requires a ticket number and its
+  private code. A Closed ticket keeps its verified history visible but MUST NOT
+  render a reply form.
 
 ## 9. Content and language rules
 
