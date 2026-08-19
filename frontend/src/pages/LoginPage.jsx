@@ -94,6 +94,10 @@ function LoginPage({ onLogin }) {
             >
               {isSubmitting ? 'Signing in…' : 'Sign in'}
             </button>
+
+            <a className={styles.secondaryLink} href="/signup">
+              New manufacturer? Create an account
+            </a>
           </form>
         </section>
       </main>

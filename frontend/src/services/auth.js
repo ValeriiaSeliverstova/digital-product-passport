@@ -17,6 +17,23 @@ export function login(email, password) {
   })
 }
 
+/** Register a manufacturer account together with its new organization. */
+export function signup(details) {
+  return apiRequest('/api/auth/signup', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      first_name: details.firstName.trim(),
+      last_name: details.lastName.trim(),
+      email: details.email.trim(),
+      password: details.password,
+      organization_name: details.organizationName.trim(),
+    }),
+  })
+}
+
 /** Request reset instructions without exposing whether the account exists. */
 export function forgotPassword(email) {
   return apiRequest('/api/auth/forgot-password', {

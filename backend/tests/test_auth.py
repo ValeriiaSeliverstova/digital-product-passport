@@ -6,6 +6,7 @@ from pytest import MonkeyPatch
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.email_delivery import EmailDeliveryError
 from app.models import Organization, PasswordResetToken, Role, User
 from app.security import (
     create_access_token,
@@ -317,6 +318,33 @@ def test_forgot_password_stores_only_hash_and_sends_email(
     assert stored.token_hash != RESET_TOKEN
     assert stored.used_at is None
     assert sent == {"recipient": TEST_EMAIL, "reset_token": RESET_TOKEN}
+
+
+def test_forgot_password_hides_email_delivery_failures(
+    client: TestClient,
+    db_session: Session,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    create_test_user(db_session)
+
+    def fail_delivery(**_values: str) -> None:
+        raise EmailDeliveryError
+
+    monkeypatch.setattr(
+        "app.routers.auth.send_password_reset_email",
+        fail_delivery,
+    )
+
+    response = client.post(
+        "/api/auth/forgot-password",
+        json={"email": TEST_EMAIL},
+    )
+
+    # The background delivery task must not turn an SMTP outage into a
+    # different response than the one an unknown address receives.
+    assert response.status_code == 200
+    assert response.json() == {"message": FORGOT_PASSWORD_MESSAGE}
+    assert db_session.scalar(select(PasswordResetToken)) is not None
 
 
 def test_forgot_password_does_not_reveal_unknown_or_inactive_accounts(

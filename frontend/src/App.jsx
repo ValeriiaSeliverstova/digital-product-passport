@@ -12,6 +12,7 @@ import ProductModelListPage from './pages/ProductModelListPage.jsx'
 import PublicPassportPage from './pages/PublicPassportPage.jsx'
 import PublicSupportTicketPage from './pages/PublicSupportTicketPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
+import SignupPage from './pages/SignupPage.jsx'
 import TemplateListPage from './pages/TemplateListPage.jsx'
 import TeamMemberPage from './pages/TeamMemberPage.jsx'
 import { getCurrentUser, login } from './services/auth.js'
@@ -42,6 +43,7 @@ function App() {
   const isResetPasswordPage = /^\/reset-password\/?$/.test(
     window.location.pathname,
   )
+  const isSignupPage = /^\/signup\/?$/.test(window.location.pathname)
 
   async function handleLogin(email, password) {
     try {
@@ -108,6 +110,10 @@ function App() {
 
   if (isResetPasswordPage) {
     return <ResetPasswordPage />
+  }
+
+  if (isSignupPage) {
+    return <SignupPage />
   }
 
   if (!accessToken || !currentUser) {

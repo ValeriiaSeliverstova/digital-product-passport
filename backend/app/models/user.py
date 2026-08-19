@@ -42,6 +42,18 @@ class User(Base):
         nullable=False,
     )
 
+    # Names are optional because seeded, script-created, and technician
+    # accounts are created without them. Public signup always supplies both.
+    first_name: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    last_name: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
     password_hash: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
