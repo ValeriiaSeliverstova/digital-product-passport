@@ -74,6 +74,7 @@ function SignupPage() {
             <form className={styles.form} onSubmit={handleSubmit}>
               <p className={styles.introduction}>
                 Register your organization to start publishing product passports.
+                Choose a password with at least {MIN_PASSWORD_LENGTH} characters.
               </p>
 
               <div className={styles.field}>
@@ -144,7 +145,13 @@ function SignupPage() {
                   minLength={MIN_PASSWORD_LENGTH}
                   maxLength={MAX_PASSWORD_LENGTH}
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) => {
+                    setPassword(event.target.value)
+                    // Clear the alert while the user is correcting the problem.
+                    setError('')
+                  }}
+                  aria-invalid={error ? 'true' : undefined}
+                  aria-describedby={error ? 'signup-error' : undefined}
                   required
                 />
               </div>
@@ -159,12 +166,21 @@ function SignupPage() {
                   minLength={MIN_PASSWORD_LENGTH}
                   maxLength={MAX_PASSWORD_LENGTH}
                   value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value)
+                    setError('')
+                  }}
+                  aria-invalid={error ? 'true' : undefined}
+                  aria-describedby={error ? 'signup-error' : undefined}
                   required
                 />
               </div>
 
-              {error && <p className={styles.error} role="alert">{error}</p>}
+              {error && (
+                <p className={styles.error} id="signup-error" role="alert">
+                  {error}
+                </p>
+              )}
 
               <button
                 className={styles.submitButton}

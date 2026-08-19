@@ -40,6 +40,10 @@ export async function apiRequest(path, options = {}) {
       const responseBody = await response.json()
       if (typeof responseBody.detail === 'string') {
         message = responseBody.detail
+      } else if (Array.isArray(responseBody.detail)) {
+        // FastAPI reports validation failures as a list of field errors, so
+        // show the first reason instead of the generic fallback.
+        message = responseBody.detail[0]?.msg || message
       }
     } catch {
       // Some error responses may not contain JSON, so keep the safe fallback.

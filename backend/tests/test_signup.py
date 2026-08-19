@@ -71,12 +71,24 @@ def test_signup_stores_only_a_password_hash(
 
     response = client.post(SIGNUP_URL, json=signup_payload())
 
-    assert response.status_code == 201
-    # The response must never carry password material of any kind.
-    assert "password" not in response.text.lower()
-
+    assert response.status_code == 201, response.text
+    # Neither the raw password nor its hash may appear in the response, and the
+    # body must expose no field beyond the safe account summary.
     user = db_session.scalar(select(User).where(User.email == SIGNUP_EMAIL))
     assert user is not None
+    assert SIGNUP_PASSWORD not in response.text
+    assert user.password_hash not in response.text
+    assert set(response.json()) == {
+        "id",
+        "email",
+        "first_name",
+        "last_name",
+        "status",
+        "role",
+        "organization_id",
+        "organization_name",
+    }
+
     assert user.password_hash != SIGNUP_PASSWORD
     assert verify_password(SIGNUP_PASSWORD, user.password_hash)
 
@@ -86,7 +98,10 @@ def test_signup_account_can_use_the_existing_login_flow(
     db_session: Session,
 ) -> None:
     seed_roles(db_session)
-    client.post(SIGNUP_URL, json=signup_payload())
+    created = client.post(SIGNUP_URL, json=signup_payload())
+    assert created.status_code == 201, created.text
+    # Signup must not hand back a session; the user has to log in separately.
+    assert "access_token" not in created.json()
 
     response = client.post(
         "/api/auth/login",
@@ -113,10 +128,11 @@ def test_signup_rejects_a_duplicate_email_regardless_of_case(
         json=signup_payload(email=f"  {SIGNUP_EMAIL.upper()}  "),
     )
 
-    assert first.status_code == 201
+    assert first.status_code == 201, first.text
     assert duplicate.status_code == 409
     assert duplicate.json()["detail"] == DUPLICATE_EMAIL_MESSAGE
-    # The rejected attempt must not leave a second organization behind.
+    # A rejected signup must never create a second organization, whether it is
+    # stopped by the pre-check or by the unique email constraint.
     assert len(db_session.scalars(select(Organization)).all()) == 1
 
 
@@ -170,10 +186,14 @@ def test_signup_cannot_choose_a_role_organization_or_status(
 
     for payload in escalations:
         response = client.post(SIGNUP_URL, json=payload)
-        # Unknown keys are forbidden, so privileged fields never reach the model.
-        assert response.status_code == 422
+        # Unknown keys are forbidden, so privileged fields never reach the
+        # model. Pin the reason so a future schema change cannot pass this
+        # test by rejecting the request for some unrelated cause.
+        assert response.status_code == 422, payload
+        assert response.json()["detail"][0]["type"] == "extra_forbidden"
 
     assert db_session.scalar(select(User)) is None
+    assert db_session.scalar(select(Organization)) is None
 
 
 def test_signup_always_assigns_the_manufacturer_role(
