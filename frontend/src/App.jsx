@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 
+import ConfirmEmailPage from './pages/ConfirmEmailPage.jsx'
 import CreateTemplatePage from './pages/CreateTemplatePage.jsx'
 import EditTemplatePage from './pages/EditTemplatePage.jsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
@@ -44,6 +45,9 @@ function App() {
     window.location.pathname,
   )
   const isSignupPage = /^\/signup\/?$/.test(window.location.pathname)
+  const isConfirmEmailPage = /^\/confirm-email\/?$/.test(
+    window.location.pathname,
+  )
 
   async function handleLogin(email, password) {
     try {
@@ -114,6 +118,10 @@ function App() {
 
   if (isSignupPage) {
     return <SignupPage />
+  }
+
+  if (isConfirmEmailPage) {
+    return <ConfirmEmailPage />
   }
 
   if (!accessToken || !currentUser) {

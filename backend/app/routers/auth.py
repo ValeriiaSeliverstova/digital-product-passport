@@ -19,11 +19,19 @@ from app.dependencies.auth import MANUFACTURER_ROLE, authentication_error
 from app.email_delivery import (
     EmailDeliveryError,
     EmailNotConfiguredError,
+    send_email_confirmation_email,
     send_password_reset_email,
 )
-from app.models import Organization, PasswordResetToken, Role, User
+from app.models import (
+    EmailConfirmationToken,
+    Organization,
+    PasswordResetToken,
+    Role,
+    User,
+)
 from app.schemas.auth import (
     AuthMessageResponse,
+    ConfirmEmailRequest,
     ForgotPasswordRequest,
     ResetPasswordRequest,
     SignupRequest,
@@ -33,7 +41,9 @@ from app.schemas.auth import (
 from app.security import (
     DUMMY_PASSWORD_HASH,
     create_access_token,
+    create_email_confirmation_token,
     create_password_reset_token,
+    hash_email_confirmation_token,
     hash_password,
     hash_password_reset_token,
     verify_password,
@@ -49,7 +59,64 @@ FORGOT_PASSWORD_MESSAGE = (
 RESET_PASSWORD_MESSAGE = "Your password has been reset successfully."
 INVALID_RESET_TOKEN_MESSAGE = "Password reset link is invalid or has expired."
 DUPLICATE_EMAIL_MESSAGE = "An account with this email already exists."
+CONFIRM_EMAIL_MESSAGE = "Your email address is confirmed. You can now sign in."
+INVALID_CONFIRMATION_MESSAGE = (
+    "This confirmation link is invalid or has expired."
+)
+RESEND_CONFIRMATION_MESSAGE = (
+    "If this account exists and is not confirmed, a new confirmation email "
+    "has been sent."
+)
 PASSWORD_RESET_LIFETIME = timedelta(minutes=30)
+EMAIL_CONFIRMATION_LIFETIME = timedelta(hours=24)
+# Signup accounts wait in this state until the emailed link is opened. Every
+# authenticated path already requires "active", so nothing else needs changing.
+PENDING_STATUS = "pending"
+
+
+def deliver_email_confirmation(*, recipient: str, confirmation_token: str) -> None:
+    """Send the confirmation email after the response has been returned."""
+
+    try:
+        send_email_confirmation_email(
+            recipient=recipient,
+            confirmation_token=confirmation_token,
+        )
+    except (EmailNotConfiguredError, EmailDeliveryError):
+        pass
+
+
+def issue_email_confirmation(
+    db: Session,
+    user: User,
+    background_tasks: BackgroundTasks,
+) -> None:
+    """Invalidate older confirmation tokens and email a fresh single-use one."""
+
+    issued_at = datetime.now(timezone.utc)
+    raw_token = create_email_confirmation_token()
+    db.execute(
+        update(EmailConfirmationToken)
+        .where(
+            EmailConfirmationToken.user_id == user.id,
+            EmailConfirmationToken.used_at.is_(None),
+        )
+        .values(used_at=issued_at),
+    )
+    db.add(
+        EmailConfirmationToken(
+            user_id=user.id,
+            token_hash=hash_email_confirmation_token(raw_token),
+            expires_at=issued_at + EMAIL_CONFIRMATION_LIFETIME,
+        ),
+    )
+    db.commit()
+
+    background_tasks.add_task(
+        deliver_email_confirmation,
+        recipient=user.email,
+        confirmation_token=raw_token,
+    )
 
 
 @router.post(
@@ -59,6 +126,7 @@ PASSWORD_RESET_LIFETIME = timedelta(minutes=30)
 )
 def signup(
     data: SignupRequest,
+    background_tasks: BackgroundTasks,
     db: Annotated[Session, Depends(get_db)],
 ) -> SignupResponse:
     """Register a manufacturer organization and its first administrator."""
@@ -86,7 +154,7 @@ def signup(
         first_name=data.first_name,
         last_name=data.last_name,
         password_hash=hash_password(data.password.get_secret_value()),
-        status="active",
+        status=PENDING_STATUS,
     )
     db.add(user)
 
@@ -102,6 +170,8 @@ def signup(
         ) from error
 
     db.refresh(user)
+    issue_email_confirmation(db, user, background_tasks)
+
     return SignupResponse(
         id=user.id,
         email=user.email,
@@ -112,6 +182,82 @@ def signup(
         organization_id=organization.id,
         organization_name=organization.name,
     )
+
+
+@router.post("/confirm-email", response_model=AuthMessageResponse)
+def confirm_email(
+    data: ConfirmEmailRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> AuthMessageResponse:
+    """Activate a pending account after validating its confirmation token."""
+
+    now = datetime.now(timezone.utc)
+    confirmation = db.scalar(
+        select(EmailConfirmationToken).where(
+            EmailConfirmationToken.token_hash
+            == hash_email_confirmation_token(data.token),
+            EmailConfirmationToken.used_at.is_(None),
+            EmailConfirmationToken.expires_at > now,
+        ),
+    )
+    if confirmation is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_CONFIRMATION_MESSAGE,
+        )
+
+    # Claim the token atomically so two concurrent clicks cannot both succeed.
+    claimed = db.execute(
+        update(EmailConfirmationToken)
+        .where(
+            EmailConfirmationToken.id == confirmation.id,
+            EmailConfirmationToken.used_at.is_(None),
+            EmailConfirmationToken.expires_at > now,
+        )
+        .values(used_at=now),
+    )
+    if claimed.rowcount != 1:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_CONFIRMATION_MESSAGE,
+        )
+
+    user = db.get(User, confirmation.user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_CONFIRMATION_MESSAGE,
+        )
+
+    # Only a pending account is activated. A deactivated account must never be
+    # re-enabled by an old confirmation link.
+    if user.status == PENDING_STATUS:
+        user.status = "active"
+    db.commit()
+
+    return AuthMessageResponse(message=CONFIRM_EMAIL_MESSAGE)
+
+
+@router.post("/resend-confirmation", response_model=AuthMessageResponse)
+def resend_confirmation(
+    data: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Annotated[Session, Depends(get_db)],
+) -> AuthMessageResponse:
+    """Email a fresh confirmation link so an expired one is not a dead end."""
+
+    user = db.scalar(
+        select(User).where(
+            User.email == data.email,
+            User.status == PENDING_STATUS,
+        ),
+    )
+    # The reply never changes, so this cannot be used to discover accounts.
+    if user is not None:
+        issue_email_confirmation(db, user, background_tasks)
+
+    return AuthMessageResponse(message=RESEND_CONFIRMATION_MESSAGE)
 
 
 @router.post("/login", response_model=TokenResponse)

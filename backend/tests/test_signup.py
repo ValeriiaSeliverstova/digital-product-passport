@@ -1,14 +1,19 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi.testclient import TestClient
+from pytest import MonkeyPatch
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Organization, Role, User
-from app.security import verify_password
+from app.models import EmailConfirmationToken, Organization, Role, User
+from app.security import hash_email_confirmation_token, verify_password
 
 
 SIGNUP_URL = "/api/auth/signup"
+CONFIRM_URL = "/api/auth/confirm-email"
 SIGNUP_EMAIL = "anna@example.com"
 SIGNUP_PASSWORD = "correct-horse-battery-staple"
+CONFIRMATION_TOKEN = "secure-email-confirmation-token-with-entropy"
 DUPLICATE_EMAIL_MESSAGE = "An account with this email already exists."
 
 
@@ -35,7 +40,7 @@ def seed_roles(db: Session) -> Role:
     return manufacturer_role
 
 
-def test_signup_creates_active_manufacturer_with_new_organization(
+def test_signup_creates_pending_manufacturer_with_new_organization(
     client: TestClient,
     db_session: Session,
 ) -> None:
@@ -48,14 +53,15 @@ def test_signup_creates_active_manufacturer_with_new_organization(
     assert body["email"] == SIGNUP_EMAIL
     assert body["first_name"] == "Anna"
     assert body["last_name"] == "Smith"
-    assert body["status"] == "active"
+    # The account stays unusable until the emailed link is opened.
+    assert body["status"] == "pending"
     assert body["role"] == "manufacturer_user"
     assert body["organization_name"] == "Example Ltd."
 
     user = db_session.scalar(select(User).where(User.email == SIGNUP_EMAIL))
     assert user is not None
     assert user.role_id == manufacturer_role.id
-    assert user.status == "active"
+    assert user.status == "pending"
 
     organization = db_session.scalar(select(Organization))
     assert organization is not None
@@ -93,7 +99,20 @@ def test_signup_stores_only_a_password_hash(
     assert verify_password(SIGNUP_PASSWORD, user.password_hash)
 
 
-def test_signup_account_can_use_the_existing_login_flow(
+def login_attempt(client: TestClient) -> object:
+    """Try the existing login flow with the credentials used at signup."""
+
+    return client.post(
+        "/api/auth/login",
+        data={
+            "grant_type": "password",
+            "username": SIGNUP_EMAIL,
+            "password": SIGNUP_PASSWORD,
+        },
+    )
+
+
+def test_signup_blocks_login_until_the_email_is_confirmed(
     client: TestClient,
     db_session: Session,
 ) -> None:
@@ -103,17 +122,83 @@ def test_signup_account_can_use_the_existing_login_flow(
     # Signup must not hand back a session; the user has to log in separately.
     assert "access_token" not in created.json()
 
-    response = client.post(
-        "/api/auth/login",
-        data={
-            "grant_type": "password",
-            "username": SIGNUP_EMAIL,
-            "password": SIGNUP_PASSWORD,
-        },
-    )
+    blocked = login_attempt(client)
 
+    assert blocked.status_code == 401
+
+
+def test_confirmed_account_can_use_the_existing_login_flow(
+    client: TestClient,
+    db_session: Session,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    seed_roles(db_session)
+    monkeypatch.setattr(
+        "app.routers.auth.create_email_confirmation_token",
+        lambda: CONFIRMATION_TOKEN,
+    )
+    client.post(SIGNUP_URL, json=signup_payload())
+
+    confirmed = client.post(
+        CONFIRM_URL,
+        json={"token": CONFIRMATION_TOKEN},
+    )
+    response = login_attempt(client)
+
+    assert confirmed.status_code == 200
     assert response.status_code == 200
     assert response.json()["token_type"] == "bearer"
+
+
+def test_confirmation_stores_only_a_hash_and_is_single_use(
+    client: TestClient,
+    db_session: Session,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    seed_roles(db_session)
+    monkeypatch.setattr(
+        "app.routers.auth.create_email_confirmation_token",
+        lambda: CONFIRMATION_TOKEN,
+    )
+    client.post(SIGNUP_URL, json=signup_payload())
+
+    stored = db_session.scalar(select(EmailConfirmationToken))
+    assert stored is not None
+    assert stored.token_hash == hash_email_confirmation_token(CONFIRMATION_TOKEN)
+    assert stored.token_hash != CONFIRMATION_TOKEN
+
+    first = client.post(CONFIRM_URL, json={"token": CONFIRMATION_TOKEN})
+    replayed = client.post(CONFIRM_URL, json={"token": CONFIRMATION_TOKEN})
+
+    assert first.status_code == 200
+    # A confirmation link must not work twice.
+    assert replayed.status_code == 400
+
+
+def test_confirmation_rejects_unknown_and_expired_tokens(
+    client: TestClient,
+    db_session: Session,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    seed_roles(db_session)
+    monkeypatch.setattr(
+        "app.routers.auth.create_email_confirmation_token",
+        lambda: CONFIRMATION_TOKEN,
+    )
+    client.post(SIGNUP_URL, json=signup_payload())
+    expired = db_session.scalar(select(EmailConfirmationToken))
+    assert expired is not None
+    expired.expires_at = datetime.now(timezone.utc) - timedelta(minutes=1)
+    db_session.commit()
+
+    unknown = client.post(CONFIRM_URL, json={"token": "x" * 43})
+    stale = client.post(CONFIRM_URL, json={"token": CONFIRMATION_TOKEN})
+
+    assert unknown.status_code == 400
+    assert stale.status_code == 400
+    user = db_session.scalar(select(User).where(User.email == SIGNUP_EMAIL))
+    assert user is not None
+    assert user.status == "pending"
 
 
 def test_signup_rejects_a_duplicate_email_regardless_of_case(

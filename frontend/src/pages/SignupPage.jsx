@@ -66,7 +66,9 @@ function SignupPage() {
           {completed ? (
             <div className={styles.form}>
               <p className={styles.success} role="status">
-                Your account has been created. You can now sign in.
+                Your account has been created. Check your email and open the
+                confirmation link to activate it. You cannot sign in until the
+                address is confirmed.
               </p>
               <a className={styles.secondaryLink} href="/">Go to sign in</a>
             </div>

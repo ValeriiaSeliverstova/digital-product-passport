@@ -47,6 +47,34 @@ def _send_email(message: EmailMessage) -> None:
         raise EmailDeliveryError from error
 
 
+def send_email_confirmation_email(
+    *,
+    recipient: str,
+    confirmation_token: str,
+) -> None:
+    """Send the signup confirmation link using the existing SMTP settings."""
+
+    if not tracking_email_is_configured():
+        raise EmailNotConfiguredError
+
+    confirmation_url = (
+        f"{settings.frontend_origin}/confirm-email?token={confirmation_token}"
+    )
+    message = EmailMessage()
+    message["Subject"] = "Confirm your Digital Product Passport account"
+    message["From"] = settings.smtp_from_email
+    message["To"] = recipient
+    message.set_content(
+        "Thank you for registering a Digital Product Passport account.\n\n"
+        f"Confirm your email address: {confirmation_url}\n\n"
+        "This link expires in 24 hours and can be used once. You cannot sign "
+        "in until the address is confirmed. If you did not create this "
+        "account, you can ignore this email."
+    )
+
+    _send_email(message)
+
+
 def send_password_reset_email(*, recipient: str, reset_token: str) -> None:
     """Send a short password reset link without logging or storing the token."""
 

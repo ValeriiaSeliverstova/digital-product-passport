@@ -41,6 +41,18 @@ def hash_password_reset_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def create_email_confirmation_token() -> str:
+    """Create a high-entropy token suitable for an email confirmation link."""
+
+    return secrets.token_urlsafe(32)
+
+
+def hash_email_confirmation_token(token: str) -> str:
+    """Create the deterministic digest stored instead of the emailed token."""
+
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
 def create_access_token(user_id: UUID) -> str:
     """Create a short-lived JWT access token for one user."""
 

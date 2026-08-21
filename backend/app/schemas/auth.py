@@ -88,6 +88,14 @@ class SignupRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class ConfirmEmailRequest(BaseModel):
+    """Private confirmation token taken from the emailed link."""
+
+    token: Annotated[str, Field(min_length=32, max_length=256)]
+
+    model_config = ConfigDict(extra="forbid")
+
+
 class SignupResponse(BaseModel):
     """Safe confirmation of a newly registered manufacturer account."""
 

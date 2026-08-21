@@ -34,6 +34,17 @@ export function signup(details) {
   })
 }
 
+/** Activate a pending account with the token from the confirmation email. */
+export function confirmEmail(token) {
+  return apiRequest('/api/auth/confirm-email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token }),
+  })
+}
+
 /** Request reset instructions without exposing whether the account exists. */
 export function forgotPassword(email) {
   return apiRequest('/api/auth/forgot-password', {
