@@ -13,6 +13,9 @@ SQLAlchemy models and applied Alembic migrations.
 - Organization
 - User
 - Role
+- PasswordResetToken
+- EmailConfirmationToken
+- InvitationToken
 - ProductCategory
 - PassportTemplate
 - TemplateField
@@ -50,6 +53,26 @@ request.
 Organization-owned entities store `organization_id` directly where it makes
 ownership checks and uniqueness constraints explicit. Model codes and product
 serial numbers are unique within an organization, rather than globally.
+
+There is no membership join table. `users.organization_id` and `users.role_id`
+are single columns and `users.email` is globally unique, so one address maps to
+exactly one organization and one role. Supporting a person who works for two
+organizations would require an `organization_members` table and a rewrite of
+every ownership helper, and is deliberately out of scope.
+
+### Single-use email credentials
+
+`password_reset_tokens`, `email_confirmation_tokens`, and `invitation_tokens`
+share one deliberate shape: a SHA-256 digest of the emailed token, an expiry,
+and a consumption timestamp. The raw token exists only long enough to be placed
+in a link, so a database disclosure cannot reveal a usable credential. Each row
+cascades on user deletion, and each flow claims its token with a conditional
+`UPDATE ... WHERE used_at IS NULL` so a link cannot be redeemed twice.
+
+They are kept as three tables rather than one because their lifetimes and
+effects differ: reset expires in 30 minutes and only changes a password,
+confirmation expires in 24 hours and activates a signed-up account, and an
+invitation expires in 7 days and sets a technician's first password.
 
 ## Versioned passport structure
 

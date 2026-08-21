@@ -6,9 +6,13 @@ after-sales support process. Safe equipment is the primary case study.
 
 ## Implemented workflow
 
+- a manufacturer signs up publicly, which creates the organization and its
+  first administrator and emails a confirmation link; the account stays pending
+  until that link is opened;
 - organization administrators create versioned passport templates;
 - administrators create product models and configure organization support data;
-- administrators add and manage service-technician accounts;
+- administrators invite service technicians by email, and each technician sets
+  their own password through a single-use invitation link;
 - administrators and technicians register physical product items, including
   products that were installed before the DPP system was introduced;
 - product data can be entered manually or suggested from a PDF/image through
@@ -46,7 +50,15 @@ after-sales support process. Safe equipment is the primary case study.
   retire products;
 - `system_admin`: seeded platform role reserved for future platform-level
   administration. No system-administrator UI or category-management API is
-  currently implemented.
+  currently implemented. Public sign-up can never create this role.
+
+Each user holds exactly one role and belongs to at most one organization, and
+`users.email` is globally unique. One email address therefore cannot be an
+administrator in one organization and a technician in another.
+
+Accounts created by sign-up or invitation start as `pending` and become
+`active` only after the emailed link is used, so email delivery must work for
+either flow to complete. Configure `SMTP_*` before using them.
 
 ## Local setup
 
@@ -120,7 +132,7 @@ cd backend
 .venv/bin/python -m pytest
 ```
 
-The tracked suite contains 132 unit and API-level integration tests. External
+The tracked suite contains 144 unit and API-level integration tests. External
 Azure DevOps, SMTP, Cloudinary, and Gemini calls are replaced with test doubles
 where applicable.
 

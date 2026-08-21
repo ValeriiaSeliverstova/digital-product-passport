@@ -34,6 +34,17 @@ export function signup(details) {
   })
 }
 
+/** Set the first password for an invited technician and activate them. */
+export function acceptInvitation(token, newPassword) {
+  return apiRequest('/api/auth/accept-invitation', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token, new_password: newPassword }),
+  })
+}
+
 /** Activate a pending account with the token from the confirmation email. */
 export function confirmEmail(token) {
   return apiRequest('/api/auth/confirm-email', {

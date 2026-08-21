@@ -53,6 +53,24 @@ def hash_email_confirmation_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def create_invitation_token() -> str:
+    """Create a high-entropy token for a technician invitation link."""
+
+    return secrets.token_urlsafe(32)
+
+
+def hash_invitation_token(token: str) -> str:
+    """Create the deterministic digest stored instead of the emailed token."""
+
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def create_unusable_password_hash() -> str:
+    """Hash a random secret so an invited account has no working password."""
+
+    return password_hasher.hash(secrets.token_urlsafe(32))
+
+
 def create_access_token(user_id: UUID) -> str:
     """Create a short-lived JWT access token for one user."""
 

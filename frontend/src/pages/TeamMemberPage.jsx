@@ -9,7 +9,6 @@ import {
 } from '../services/teamMembers.js'
 import styles from './TeamMemberPage.module.css'
 
-const MIN_PASSWORD_LENGTH = 12
 
 function TeamMemberPage({
   accessToken,
@@ -19,7 +18,6 @@ function TeamMemberPage({
 }) {
   const [members, setMembers] = useState([])
   const [email, setEmail] = useState('')
-  const [initialPassword, setInitialPassword] = useState('')
   const [loadState, setLoadState] = useState('loading')
   const [isCreating, setIsCreating] = useState(false)
   const [updatingMemberId, setUpdatingMemberId] = useState(null)
@@ -53,26 +51,17 @@ function TeamMemberPage({
     event.preventDefault()
     setError('')
     setNotice('')
-    if (initialPassword.length < MIN_PASSWORD_LENGTH) {
-      setError(`Initial password must contain at least ${MIN_PASSWORD_LENGTH} characters.`)
-      return
-    }
 
     setIsCreating(true)
     try {
-      const member = await createTeamMember(
-        accessToken,
-        email.trim(),
-        initialPassword,
-      )
+      const member = await createTeamMember(accessToken, email.trim())
       setMembers((current) =>
         [...current, member].sort((first, second) =>
           first.email.localeCompare(second.email),
         ),
       )
       setEmail('')
-      setInitialPassword('')
-      setNotice('Service technician account was created.')
+      setNotice('Invitation sent. The technician sets their own password.')
     } catch (createError) {
       if (createError instanceof ApiError && createError.status === 401) {
         onLogout()
@@ -151,22 +140,12 @@ function TeamMemberPage({
                 required
               />
             </div>
-            <div>
-              <label htmlFor="technician-password">Initial password</label>
-              <input
-                id="technician-password"
-                type="password"
-                autoComplete="new-password"
-                minLength={MIN_PASSWORD_LENGTH}
-                maxLength={128}
-                value={initialPassword}
-                onChange={(event) => setInitialPassword(event.target.value)}
-                required
-              />
-              <p>Share it privately. The technician can change it after signing in.</p>
-            </div>
+            <p>
+              The technician receives an email invitation and chooses their own
+              password. The account stays pending until they open the link.
+            </p>
             <button type="submit" disabled={isCreating}>
-              {isCreating ? 'Creating…' : 'Add technician'}
+              {isCreating ? 'Sending…' : 'Send invitation'}
             </button>
           </form>
         </section>
@@ -186,14 +165,22 @@ function TeamMemberPage({
                 <li key={member.id}>
                   <div>
                     <strong>{member.email}</strong>
-                    <span>{member.status === 'active' ? 'Active' : 'Inactive'}</span>
+                    <span>
+                      {member.status === 'active' && 'Active'}
+                      {member.status === 'inactive' && 'Inactive'}
+                      {member.status === 'pending' && 'Invitation sent'}
+                    </span>
                   </div>
                   <button
                     className={member.status === 'active'
                       ? styles.deactivateButton
                       : styles.activateButton}
                     type="button"
-                    disabled={updatingMemberId === member.id}
+                    // A pending technician must accept the invitation first.
+                    disabled={
+                      updatingMemberId === member.id ||
+                      member.status === 'pending'
+                    }
                     onClick={() => toggleMember(member)}
                   >
                     {updatingMemberId === member.id

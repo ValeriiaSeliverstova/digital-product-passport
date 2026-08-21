@@ -96,6 +96,18 @@ class ConfirmEmailRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class AcceptInvitationRequest(BaseModel):
+    """Invitation token and the password the technician chooses."""
+
+    token: Annotated[str, Field(min_length=32, max_length=256)]
+    new_password: Annotated[
+        SecretStr,
+        Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH),
+    ]
+
+    model_config = ConfigDict(extra="forbid")
+
+
 class SignupResponse(BaseModel):
     """Safe confirmation of a newly registered manufacturer account."""
 

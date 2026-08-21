@@ -24,12 +24,14 @@ from app.email_delivery import (
 )
 from app.models import (
     EmailConfirmationToken,
+    InvitationToken,
     Organization,
     PasswordResetToken,
     Role,
     User,
 )
 from app.schemas.auth import (
+    AcceptInvitationRequest,
     AuthMessageResponse,
     ConfirmEmailRequest,
     ForgotPasswordRequest,
@@ -44,6 +46,7 @@ from app.security import (
     create_email_confirmation_token,
     create_password_reset_token,
     hash_email_confirmation_token,
+    hash_invitation_token,
     hash_password,
     hash_password_reset_token,
     verify_password,
@@ -67,6 +70,8 @@ RESEND_CONFIRMATION_MESSAGE = (
     "If this account exists and is not confirmed, a new confirmation email "
     "has been sent."
 )
+ACCEPT_INVITATION_MESSAGE = "Your password is set. You can now sign in."
+INVALID_INVITATION_MESSAGE = "This invitation link is invalid or has expired."
 PASSWORD_RESET_LIFETIME = timedelta(minutes=30)
 EMAIL_CONFIRMATION_LIFETIME = timedelta(hours=24)
 # Signup accounts wait in this state until the emailed link is opened. Every
@@ -182,6 +187,60 @@ def signup(
         organization_id=organization.id,
         organization_name=organization.name,
     )
+
+
+@router.post("/accept-invitation", response_model=AuthMessageResponse)
+def accept_invitation(
+    data: AcceptInvitationRequest,
+    db: Annotated[Session, Depends(get_db)],
+) -> AuthMessageResponse:
+    """Let an invited technician set their first password and activate."""
+
+    now = datetime.now(timezone.utc)
+    invitation = db.scalar(
+        select(InvitationToken).where(
+            InvitationToken.token_hash == hash_invitation_token(data.token),
+            InvitationToken.used_at.is_(None),
+            InvitationToken.expires_at > now,
+        ),
+    )
+    if invitation is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_INVITATION_MESSAGE,
+        )
+
+    # Claim the token atomically so it cannot be redeemed twice.
+    claimed = db.execute(
+        update(InvitationToken)
+        .where(
+            InvitationToken.id == invitation.id,
+            InvitationToken.used_at.is_(None),
+            InvitationToken.expires_at > now,
+        )
+        .values(used_at=now),
+    )
+    if claimed.rowcount != 1:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_INVITATION_MESSAGE,
+        )
+
+    user = db.get(User, invitation.user_id)
+    # Only a pending invitation activates an account, so an old link can never
+    # reset the password of a technician an administrator later deactivated.
+    if user is None or user.status != PENDING_STATUS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=INVALID_INVITATION_MESSAGE,
+        )
+
+    user.password_hash = hash_password(data.new_password.get_secret_value())
+    user.status = "active"
+    db.commit()
+
+    return AuthMessageResponse(message=ACCEPT_INVITATION_MESSAGE)
 
 
 @router.post("/confirm-email", response_model=AuthMessageResponse)

@@ -1,10 +1,14 @@
 from fastapi.testclient import TestClient
 from uuid import UUID
+from pytest import MonkeyPatch
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import Organization, Role, User
+from app.models import InvitationToken, Organization, Role, User
 from app.security import create_access_token, hash_password, verify_password
+
+
+INVITATION_TOKEN = "secure-technician-invitation-token-with-entropy"
 
 
 def create_role(db: Session, name: str) -> Role:
@@ -37,10 +41,15 @@ def create_user(
     }
 
 
-def test_organization_admin_can_create_list_and_deactivate_technician(
+def test_organization_admin_can_invite_list_and_deactivate_technician(
     client: TestClient,
     db_session: Session,
+    monkeypatch: MonkeyPatch,
 ) -> None:
+    monkeypatch.setattr(
+        "app.routers.team_members.create_invitation_token",
+        lambda: INVITATION_TOKEN,
+    )
     organization = Organization(name="Example Manufacturer")
     db_session.add(organization)
     create_role(db_session, "service_technician")
@@ -54,25 +63,47 @@ def test_organization_admin_can_create_list_and_deactivate_technician(
     created = client.post(
         "/api/organizations/me/team-members",
         headers=headers,
-        json={
-            "email": "Technician@Example.com",
-            "initial_password": "temporary-password-123",
-        },
+        json={"email": "Technician@Example.com"},
     )
 
     assert created.status_code == 201, created.text
     result = created.json()
     assert result["email"] == "technician@example.com"
-    assert result["status"] == "active"
+    # The invitation has been emailed but not yet accepted.
+    assert result["status"] == "pending"
     assert result["role"] == "service_technician"
     stored = db_session.get(User, UUID(result["id"]))
     assert stored is not None
     assert stored.organization_id == organization.id
-    assert verify_password("temporary-password-123", stored.password_hash)
+
+    invitation = db_session.scalar(select(InvitationToken))
+    assert invitation is not None
+    assert invitation.user_id == stored.id
+    assert invitation.used_at is None
 
     listed = client.get("/api/organizations/me/team-members", headers=headers)
     assert listed.status_code == 200
     assert [member["id"] for member in listed.json()] == [result["id"]]
+
+    # A pending technician cannot be force-activated past their invitation.
+    forced = client.put(
+        f"/api/organizations/me/team-members/{result['id']}",
+        headers=headers,
+        json={"status": "active"},
+    )
+    assert forced.status_code == 409
+
+    accepted = client.post(
+        "/api/auth/accept-invitation",
+        json={
+            "token": INVITATION_TOKEN,
+            "new_password": "technician-chosen-password",
+        },
+    )
+    assert accepted.status_code == 200, accepted.text
+    db_session.refresh(stored)
+    assert stored.status == "active"
+    assert verify_password("technician-chosen-password", stored.password_hash)
 
     deactivated = client.put(
         f"/api/organizations/me/team-members/{result['id']}",

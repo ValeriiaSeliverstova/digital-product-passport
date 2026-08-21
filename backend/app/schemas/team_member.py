@@ -1,19 +1,17 @@
-from typing import Annotated, Literal
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
-
-from app.schemas.user import MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TeamMemberCreate(BaseModel):
-    """Initial credentials for one organization service technician."""
+    """Address invited to create one organization service-technician account.
+
+    No password is accepted here. The technician chooses their own through the
+    emailed invitation link, so a credential never travels by email.
+    """
 
     email: str = Field(min_length=3, max_length=320)
-    initial_password: Annotated[
-        SecretStr,
-        Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH),
-    ]
 
     @field_validator("email")
     @classmethod
@@ -45,6 +43,7 @@ class TeamMemberResponse(BaseModel):
 
     id: UUID
     email: str
-    status: Literal["active", "inactive"]
+    # "pending" covers an invited technician who has not chosen a password yet.
+    status: Literal["active", "inactive", "pending"]
     role: str
 

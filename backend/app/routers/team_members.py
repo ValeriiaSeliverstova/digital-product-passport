@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -11,13 +12,22 @@ from app.dependencies.auth import (
     SERVICE_TECHNICIAN_ROLE,
     require_manufacturer,
 )
-from app.models import Role, User
+from app.email_delivery import (
+    EmailDeliveryError,
+    EmailNotConfiguredError,
+    send_team_member_invitation_email,
+)
+from app.models import InvitationToken, Role, User
 from app.schemas.team_member import (
     TeamMemberCreate,
     TeamMemberResponse,
     TeamMemberUpdate,
 )
-from app.security import hash_password
+from app.security import (
+    create_invitation_token,
+    create_unusable_password_hash,
+    hash_invitation_token,
+)
 
 
 router = APIRouter(
@@ -26,6 +36,28 @@ router = APIRouter(
 )
 DatabaseSession = Annotated[Session, Depends(get_db)]
 OrganizationAdmin = Annotated[User, Depends(require_manufacturer)]
+INVITATION_LIFETIME = timedelta(days=7)
+# An invited technician waits here until the emailed link is used. Every
+# authenticated path already requires "active", so the account stays unusable.
+PENDING_STATUS = "pending"
+
+
+def deliver_invitation(
+    *,
+    recipient: str,
+    invitation_token: str,
+    organization_name: str,
+) -> None:
+    """Send the invitation after the response has already been returned."""
+
+    try:
+        send_team_member_invitation_email(
+            recipient=recipient,
+            invitation_token=invitation_token,
+            organization_name=organization_name,
+        )
+    except (EmailNotConfiguredError, EmailDeliveryError):
+        pass
 
 
 @router.get("", response_model=list[TeamMemberResponse])
@@ -54,10 +86,11 @@ def list_team_members(
 )
 def create_team_member(
     data: TeamMemberCreate,
+    background_tasks: BackgroundTasks,
     db: DatabaseSession,
     current_user: OrganizationAdmin,
 ) -> TeamMemberResponse:
-    """Create one technician account inside the current organization."""
+    """Invite one technician to join the current organization by email."""
 
     role = db.scalar(select(Role).where(Role.name == SERVICE_TECHNICIAN_ROLE))
     if role is None:
@@ -70,8 +103,9 @@ def create_team_member(
         organization_id=current_user.organization_id,
         role_id=role.id,
         email=data.email,
-        password_hash=hash_password(data.initial_password.get_secret_value()),
-        status="active",
+        # The account has no usable password until the invitation is accepted.
+        password_hash=create_unusable_password_hash(),
+        status=PENDING_STATUS,
     )
     db.add(member)
     try:
@@ -83,6 +117,37 @@ def create_team_member(
             detail="A user with this email already exists",
         ) from error
     db.refresh(member)
+
+    issued_at = datetime.now(timezone.utc)
+    raw_token = create_invitation_token()
+    db.execute(
+        update(InvitationToken)
+        .where(
+            InvitationToken.user_id == member.id,
+            InvitationToken.used_at.is_(None),
+        )
+        .values(used_at=issued_at),
+    )
+    db.add(
+        InvitationToken(
+            user_id=member.id,
+            token_hash=hash_invitation_token(raw_token),
+            expires_at=issued_at + INVITATION_LIFETIME,
+        ),
+    )
+    db.commit()
+
+    background_tasks.add_task(
+        deliver_invitation,
+        recipient=member.email,
+        invitation_token=raw_token,
+        organization_name=(
+            current_user.organization.name
+            if current_user.organization is not None
+            else "Your organization"
+        ),
+    )
+
     return _team_member_response(member)
 
 
@@ -108,6 +173,14 @@ def update_team_member(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Team member not found",
+        )
+
+    # Activating a pending invitation here would leave the technician with an
+    # unusable password and no way to redeem their link, so refuse it.
+    if member.status == PENDING_STATUS:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This technician has not accepted their invitation yet",
         )
 
     member.status = data.status

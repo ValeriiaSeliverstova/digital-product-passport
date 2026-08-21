@@ -75,6 +75,35 @@ def send_email_confirmation_email(
     _send_email(message)
 
 
+def send_team_member_invitation_email(
+    *,
+    recipient: str,
+    invitation_token: str,
+    organization_name: str,
+) -> None:
+    """Invite a technician to choose their own password, never sending one."""
+
+    if not tracking_email_is_configured():
+        raise EmailNotConfiguredError
+
+    invitation_url = (
+        f"{settings.frontend_origin}/accept-invitation?token={invitation_token}"
+    )
+    message = EmailMessage()
+    message["Subject"] = "You have been added to a Digital Product Passport team"
+    message["From"] = settings.smtp_from_email
+    message["To"] = recipient
+    message.set_content(
+        f"{organization_name} created a service-technician account for you in "
+        "the Digital Product Passport platform.\n\n"
+        f"Choose your password: {invitation_url}\n\n"
+        "This link expires in 7 days and can be used once. If you were not "
+        "expecting this invitation, you can ignore this email."
+    )
+
+    _send_email(message)
+
+
 def send_password_reset_email(*, recipient: str, reset_token: str) -> None:
     """Send a short password reset link without logging or storing the token."""
 

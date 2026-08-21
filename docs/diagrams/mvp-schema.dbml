@@ -27,8 +27,37 @@ Table users {
   organization_id uuid [ref: > organizations.id]
   role_id uuid [not null, ref: > roles.id]
   email varchar [not null, unique]
+  first_name varchar
+  last_name varchar
   password_hash varchar [not null]
-  status varchar [not null, default: 'active']
+  status varchar [not null, default: 'active', note: 'pending until the emailed link is used']
+}
+
+Table password_reset_tokens {
+  id uuid [pk]
+  user_id uuid [not null, ref: > users.id]
+  token_hash varchar [not null, unique, note: 'SHA-256 digest; the raw token is never stored']
+  expires_at timestamptz [not null]
+  used_at timestamptz
+  created_at timestamptz [not null]
+}
+
+Table email_confirmation_tokens {
+  id uuid [pk]
+  user_id uuid [not null, ref: > users.id]
+  token_hash varchar [not null, unique, note: 'SHA-256 digest; the raw token is never stored']
+  expires_at timestamptz [not null]
+  used_at timestamptz
+  created_at timestamptz [not null]
+}
+
+Table invitation_tokens {
+  id uuid [pk]
+  user_id uuid [not null, ref: > users.id]
+  token_hash varchar [not null, unique, note: 'SHA-256 digest; the raw token is never stored']
+  expires_at timestamptz [not null]
+  used_at timestamptz
+  created_at timestamptz [not null]
 }
 
 Table product_categories {

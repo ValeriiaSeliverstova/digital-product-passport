@@ -13,23 +13,29 @@ not a universal DPP interoperability platform or a production service.
 ## End-to-end workflow
 
 1. Reference product categories and roles are seeded.
-2. An organization administrator creates and activates a versioned passport
+2. A manufacturer registers publicly through the sign-up page. The backend
+   creates the organization and its first administrator together, emails a
+   confirmation link, and keeps the account pending until the link is opened.
+3. An organization administrator invites service technicians by email address
+   only. Each technician chooses their own password through a single-use
+   invitation link, so no credential is ever sent by email.
+4. An organization administrator creates and activates a versioned passport
    template for an active category.
-3. The administrator creates an active product model tied to one exact active
+5. The administrator creates an active product model tied to one exact active
    template version.
-4. An administrator or service technician registers a physical product item.
+6. An administrator or service technician registers a physical product item.
    This also supports retrospective registration of an already installed item.
-5. Passport values are entered manually or proposed from a PDF/image through
+7. Passport values are entered manually or proposed from a PDF/image through
    Gemini and reviewed by the user.
-6. The item is published after all required template values pass validation.
-7. A customer opens the public passport through its URL, a generated QR code,
+8. The item is published after all required template values pass validation.
+9. A customer opens the public passport through its URL, a generated QR code,
    or a supported NFC tag.
-8. Organization staff append public or restricted lifecycle events.
-9. A customer submits a support ticket from the public passport. The backend
-   creates an Azure DevOps work item and sends a private tracking code by email.
-10. The public passport provides a generic tracking action but reveals no
+10. Organization staff append public or restricted lifecycle events.
+11. A customer submits a support ticket from the public passport. The backend
+    creates an Azure DevOps work item and sends a private tracking code by email.
+12. The public passport provides a generic tracking action but reveals no
     ticket number, count, date, status, or message before verification.
-11. The customer enters the ticket number and private code from email to open a
+13. The customer enters the ticket number and private code from email to open a
     ticket, read customer-visible support comments, and reply while it remains
     open. When tracking starts from a passport, the backend additionally checks
     that the ticket belongs to that product.
@@ -75,6 +81,8 @@ category API and maintained by the seed script.
 - `Organization`
 - `User`
 - `PasswordResetToken`
+- `EmailConfirmationToken`
+- `InvitationToken`
 - `Role`
 - `ProductCategory`
 - `PassportTemplate`
@@ -103,11 +111,35 @@ administrators and technicians must belong to an organization; a platform
 administrator may have none. Active status is checked on every authenticated
 request.
 
+A user stores an optional first and last name, supplied by public sign-up.
+Because `users.email` is globally unique and each row carries exactly one
+`organization_id` and one `role_id`, a single email address cannot be an
+administrator in one organization and a technician in another.
+
+Accounts created by sign-up or by invitation start with status `pending` and
+become `active` only after the emailed link is used. Every authenticated path
+requires `active`, so a pending account cannot sign in or reset its password.
+
 ### PasswordResetToken
 
 Stores a one-way hash of a temporary password-reset credential together with
 its user, expiry time, and consumption time. Raw tokens exist only long enough
-to be placed in the email link and are never persisted.
+to be placed in the email link and are never persisted. The link expires after
+30 minutes.
+
+### EmailConfirmationToken
+
+Proves that a sign-up address is reachable. It follows the same shape as the
+reset token: SHA-256 hash only, single use, and an expiry, here 24 hours.
+Confirming activates a pending account. A fresh link can be requested, so an
+expired one is not a dead end.
+
+### InvitationToken
+
+Lets an invited service technician choose their first password. Same hash-only,
+single-use shape, with a 7-day expiry. The invited account holds a random
+unusable password hash until the link is redeemed, so no credential is ever
+sent by email and the inviting administrator never learns it.
 
 ### ProductCategory
 
@@ -201,12 +233,22 @@ FastAPI also provides `GET /health` and interactive OpenAPI documentation at
 ### Authentication and current user
 
 ```text
+POST /api/auth/signup
+POST /api/auth/confirm-email
+POST /api/auth/resend-confirmation
+POST /api/auth/accept-invitation
 POST /api/auth/login
 POST /api/auth/forgot-password
 POST /api/auth/reset-password
 GET  /api/users/me
 PUT  /api/users/me/password
 ```
+
+Sign-up accepts only a first name, last name, email, password, and organization
+name. Unknown keys are rejected, so `organization_id`, `role_id`, a role name,
+and a status can never be supplied by a client; the backend assigns the
+`manufacturer_user` role itself and public sign-up cannot create a
+`system_admin`.
 
 ### Categories and organization
 
@@ -226,6 +268,11 @@ GET  /api/organizations/me/team-members
 POST /api/organizations/me/team-members
 PUT  /api/organizations/me/team-members/{member_id}
 ```
+
+`POST` takes an email address only and emails an invitation. `PUT` refuses to
+change the status of a technician who has not accepted their invitation yet,
+because activating them early would leave an unusable password and invalidate
+their link.
 
 ### Passport templates and fields
 
@@ -297,7 +344,7 @@ cache.
 
 ## Verification status
 
-The tracked backend suite currently has 132 pytest tests covering unit-level rules and
+The tracked backend suite currently has 144 pytest tests covering unit-level rules and
 API-level workflows with an isolated in-memory SQLite database. External
 services are replaced with test doubles. Frontend lint and production build
 checks are implemented; automated frontend component and end-to-end tests are
@@ -306,6 +353,8 @@ not.
 ## Explicitly outside the current MVP
 
 - platform-administrator and category-management UI/API;
+- membership of one email address in more than one organization, and more than
+  one role per user;
 - a universal CRM, ERP, or PLM connector;
 - a persisted registry of QR/NFC carriers;
 - customer accounts and a customer ticket list;

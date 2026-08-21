@@ -7,13 +7,13 @@ export function getTeamMembers(accessToken) {
   })
 }
 
-/** Create a technician with an initial password chosen by the administrator. */
-export function createTeamMember(accessToken, email, initialPassword) {
+/** Invite a technician by email; they choose their own password. */
+export function createTeamMember(accessToken, email) {
   return apiRequest('/api/organizations/me/team-members', {
     method: 'POST',
     token: accessToken,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, initial_password: initialPassword }),
+    body: JSON.stringify({ email }),
   })
 }
 

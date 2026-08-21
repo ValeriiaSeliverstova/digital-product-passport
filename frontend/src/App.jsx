@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 
+import AcceptInvitationPage from './pages/AcceptInvitationPage.jsx'
 import ConfirmEmailPage from './pages/ConfirmEmailPage.jsx'
 import CreateTemplatePage from './pages/CreateTemplatePage.jsx'
 import EditTemplatePage from './pages/EditTemplatePage.jsx'
@@ -46,6 +47,9 @@ function App() {
   )
   const isSignupPage = /^\/signup\/?$/.test(window.location.pathname)
   const isConfirmEmailPage = /^\/confirm-email\/?$/.test(
+    window.location.pathname,
+  )
+  const isAcceptInvitationPage = /^\/accept-invitation\/?$/.test(
     window.location.pathname,
   )
 
@@ -122,6 +126,10 @@ function App() {
 
   if (isConfirmEmailPage) {
     return <ConfirmEmailPage />
+  }
+
+  if (isAcceptInvitationPage) {
+    return <AcceptInvitationPage />
   }
 
   if (!accessToken || !currentUser) {
